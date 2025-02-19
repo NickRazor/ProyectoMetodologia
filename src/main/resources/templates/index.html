@@ -1,114 +1,105 @@
 <!DOCTYPE html>
-<html lang="es">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Happy Market</title>
-    <link href="styles.css" rel="stylesheet" />
+    <link rel="stylesheet" th:href="@{/css/index/index.css}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="icon" type="image/png" href="img/favilogo.png">
+    <link rel="icon" type="image/png" th:href="@{/img/index/favilogo.png}">
+    <script src="https://unpkg.com/iconLib@latest"></script>
 </head>
 
 <body>
-    <div class="header">
-        <div class="logo-country">
-            <img src="./img/logohm.jpg" alt="Logo">
-            
-            <div class="location-group">
-                <i class="fas fa-map-marker-alt"></i>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Flag_of_Ecuador.svg/800px-Flag_of_Ecuador.svg.png" alt="Ecuador" class="country-flag">
-            </div>
-            <select>
-                <option value="Argentina">Argentina</option>
-                <option value="Bolivia">Bolivia</option>
-                <option value="Brasil">Brasil</option>
-                <option value="Chile">Chile</option>
-                <option value="Colombia">Colombia</option>
-                <option value="Costa Rica">Costa Rica</option>
-                <option value="Cuba">Cuba</option>
-                <option value="Ecuador">Ecuador</option>
-                <option value="El Salvador">El Salvador</option>
-                <option value="España">España</option>
-                <option value="Estados Unidos">Estados Unidos</option>
-                <option value="Guatemala">Guatemala</option>
-                <option value="Honduras">Honduras</option>
-                <option value="México">México</option>
-                <option value="Nicaragua">Nicaragua</option>
-                <option value="Panamá">Panamá</option>
-                <option value="Paraguay">Paraguay</option>
-                <option value="Perú">Perú</option>
-                <option value="Puerto Rico">Puerto Rico</option>
-                <option value="República Dominicana">República Dominicana</option>
-                <option value="Uruguay">Uruguay</option>
-                <option value="Venezuela">Venezuela</option>
-            </select>
-        </div>
-        <input type="text" placeholder="Buscar productos...">
-        <div class="icons">
-            <i class="fas fa-shopping-cart"></i>
-            <i class="fas fa-user-circle"></i>
-        </div>
-    </div>
-    <div class="nav">
-        <a href="#">Explorar</a>
-        <a href="#">Electrónicos</a>
-        <a href="#">Casa y Jardín</a>
-        <a href="#">Juguetes</a>
-        <a href="#">Ropa</a>
-    </div>
-<div class="main">
-<div style="display: flex; align-items: center;">
-    <a href="#"><i class="fas fa-arrow-left"></i></a>
-    <h2 style="margin-left: 10px;">Productos recién llegados</h2>
-</div>
-    <div class="products-container">
-        <div class="product">
-            <img alt="PlayStation 5" height="820"
-                src="https://storage.googleapis.com/a1aa/image/YXvDaF1aSmolEt5K82LmjKMCjmI5B50witLZ8oyqrie9y0DKA.jpg"
-                width="400" />
-            <div class="info">
-                <h3>PlayStation 5</h3>
-                <p>La versión en blanco y negro de la PS5 salió a la venta.</p>
-                <a href="#">Comprar ahora</a>
-            </div>
-        </div>
-        <div class="productsgroup">
-            <div class="product">
-                <img alt="Women's Collections" height="400"
-                    src="https://storage.googleapis.com/a1aa/image/fMCHy94p1LQrDSFruJtt3AqyYxHgak91GRykMjcrdSE8y0DKA.jpg"
-                    width="800" />
-                <div class="info">
-                    <h3>Women's Collections</h3>
-                    <p>Colecciones destacadas de mujer que te darán otra vibra.</p>
-                    <a href="#">Comprar ahora</a>
+    <header class="header">
+        <div class="container header-container">
+            <div class="header-main">
+                <div class="header-left">
+                    <a th:href="@{/}" class="logo">
+                        <img th:src="@{/img/index/logohm.jpg}" alt="Logo" class="logo-img">
+                    </a>
+
+                </div>
+                <div class="search-bar">
+                    <input class="search-input" type="text" placeholder="Buscar productos...">
+                </div>
+                <div class="header-actions">
+                    <button class="location-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <span>Ecuador</span>
+                    </button>
+                    <a th:href="@{/auth/login}" class="user-icon">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Iniciar sesión</span>
+                    </a>
+                    <button class="cart-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="cart-count">0</span>
+                    </button>
                 </div>
             </div>
-            <div class="product-pair">
-                <div class="product">
-                    <img alt="Altavoces" height="400"
-                        src="https://cdn.geekwire.com/wp-content/uploads/2016/03/PR_AlexaFamily_V01.jpg" width="600" />
-                    <div class="info">
-                        <h3>Altavoces</h3>
-                        <p>Altavoces indestructibles de Amazon.</p>
-                        <a href="#">Comprar ahora</a>
-                    </div>
-                </div>
-                <div class="product">
-                    <img alt="Perfume" height="400"
-                        src="https://storage.googleapis.com/a1aa/image/MeZwfMmSxCgxRUrye1YgmTaAP7yFwnATfIP7Ot7Vza5oXmegC.jpg"
-                        width="600" />
-                    <div class="info">
-                        <h3>Perfume</h3>
-                        <p>GUCCI INTENSE OUD EDP</p>
-                        <a href="#">Comprar ahora</a>
-                    </div>
-                </div>
+            <nav class="main-nav">
+                <a href="#">Explorar</a>
+                <a href="#">Electrónicos</a>
+                <a href="#">Casa y Jardín</a>
+                <a href="#">Juguetes</a>
+                <a href="#">Ropa</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="hero-banner">
+        <div class="container banner-content">
+            <div class="banner-text">
+                <span class="offer-tag">Oferta Especial</span>
+                <h1>COMPRA ONLINE</h1>
+                <p>Descubre ofertas increíbles con hasta 70% de descuento en tus productos favoritos. ¡Compra ahora y ahorra!</p>
+                <button class="btn btn-primary">Comprar Ahora</button>
+            </div>
+            <div class="banner-image">
+                <!-- Utilizando Thymeleaf para la imagen -->
+                <img th:src="@{/img/index/favilogo.png}" alt="Shopping">
             </div>
         </div>
     </div>
-</div>
+    <main class="container main-content">
+        <section class="products-section">
+            <h2>Productos Disponibles</h2>
+            <div id="products-container" class="products-container">
+                <!-- Las tarjetas se generarán aquí dinámicamente -->
+            </div>
+        </section>
+    </main>
+    <!-- Sección de productos con las nuevas tarjetitas -->
+    <main class="container main-content">
+        <!-- Sección Productos Destacados -->
+        <section class="products-section">
+            <h2>Productos Destacados</h2>
+            <div id="featuredProductsContainer" class="products-grid">
+                <!-- Tarjetitas generadas dinámicamente con JavaScript -->
+            </div>
+        </section>
+
+        <!-- Sección Productos en Oferta -->
+        <section class="products-section">
+            <h2>Productos en Oferta</h2>
+            <div id="offerProductsContainer" class="products-grid">
+                <!-- Tarjetitas generadas dinámicamente con JavaScript -->
+            </div>
+        </section>
+    </main>
+
+
+
+    <!-- Footer -->
     <div class="footer">
         <div>
             <i class="fas fa-shipping-fast"></i>
@@ -126,6 +117,9 @@
             <p>Reembolsos en 30 días</p>
         </div>
     </div>
+
+    <!-- Se carga el archivo JavaScript externo -->
+    <script th:src="@{/js/index/index.js}"></script>
 </body>
 
 </html>
