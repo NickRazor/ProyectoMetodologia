@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Publicaciones - Happy Market</title>
+    <link rel="icon" type="image/png" th:href="@{/img/index/favilogo.png}">
+    <link rel="apple-touch-icon" th:href="@{/img/index/favilogo.png}">
+    <link rel="stylesheet" th:href="@{/css/user/user.css}">
+    <link rel="stylesheet" th:href="@{/css/common/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/user/mis-publicaciones.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Incluir el header -->
+        <div th:replace="~{fragments/header :: header}"></div>
+
+        <div class="main-container">
+            <!-- Incluir el sidebar -->
+            <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+            <main class="main-content">
+                <div class="mis-publicaciones-container">
+                    <h2>Mis Publicaciones</h2>
+                    <div class="publicaciones-grid" th:if="${publicaciones != null and !publicaciones.empty}">
+                        <div th:each="publicacion : ${publicaciones}" class="publicacion-card">
+                            <img th:if="${publicacion.imagenId}" 
+                                 th:src="@{'/api/imagen/' + ${publicacion.imagenIdAsString}}"
+                                 alt="Imagen del producto">
+                            <div class="publicacion-info">
+                                <h3 th:text="${publicacion.titulo}">Título del Producto</h3>
+                                <p th:text="${publicacion.descripcion}">Descripción del producto</p>
+                                <div class="publicacion-detalles">
+                                    <span class="precio" th:text="'$' + ${#numbers.formatDecimal(publicacion.precio, 1, 2)}">$0.00</span>
+                                    <span class="fecha" th:text="${#dates.format(publicacion.fecha, 'dd/MM/yyyy')}">Fecha</span>
+                                </div>
+                                <div class="publicacion-acciones">
+                                    <button class="btn-editar" 
+                                            th:data-id="${publicacion.id}"
+                                            onclick="editarPublicacion(this.getAttribute('data-id'))">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    <button class="btn-eliminar" 
+                                            th:data-id="${publicacion.id}"
+                                            onclick="eliminarPublicacion(this.getAttribute('data-id'))">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${publicaciones == null or publicaciones.empty}" class="no-publicaciones">
+                        <p>Aún no tienes publicaciones</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script th:src="@{/js/user/user.js}"></script>
+    <!-- Agregar antes del cierre del body -->
+    <script th:src="@{/js/user/publicaciones.js}"></script>
+</body>
+</html>

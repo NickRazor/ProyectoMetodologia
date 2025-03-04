@@ -1,9 +1,11 @@
 package modelo;
 
 import org.bson.types.ObjectId;
+import java.text.SimpleDateFormat;
 
 public class Publicacion {
     private ObjectId id;
+    private String publicacionId; // Nuevo campo para ID más amigable
     private String titulo;
     private String descripcion;
     private double precio;
@@ -11,14 +13,50 @@ public class Publicacion {
     private java.util.Date fecha;
     private int ratingLikes;
     private int ratingDislikes;
-    // Constructor
-    public Publicacion() {}
+    private ObjectId usuarioId;
+
+    // Constructor actualizado
+    public Publicacion() {
+        this.fecha = new java.util.Date();
+        this.publicacionId = generarPublicacionId();
+    }
+
+    // Método para generar ID único y amigable
+    private String generarPublicacionId() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+        String timeStamp = sdf.format(new java.util.Date());
+        return "PUB-" + timeStamp + "-" + System.nanoTime() % 1000;
+    }
+    
+    // Getters y Setters para el nuevo campo
+    public String getPublicacionId() {
+        return publicacionId;
+    }
+
+    public void setPublicacionId(String publicacionId) {
+        this.publicacionId = publicacionId;
+    }
+
+    // Método para validar si una publicación pertenece a un usuario
+    public boolean perteneceAUsuario(ObjectId usuarioId) {
+        return this.usuarioId != null && this.usuarioId.equals(usuarioId);
+    }
+
+    // Método para verificar si la publicación está completa
+    public boolean isValid() {
+        return titulo != null && !titulo.trim().isEmpty() &&
+               descripcion != null && !descripcion.trim().isEmpty() &&
+               precio >= 0 &&
+               imagenId != null;
+    }
 
     // Getters y Setters
     public ObjectId getId() {
         return id;
     }
-
+    public ObjectId getImagenId() {
+    	return imagenId;
+    }
     public void setId(ObjectId id) {
         this.id = id;
     }
@@ -47,7 +85,7 @@ public class Publicacion {
         this.precio = precio;
     }
 
-    public String getImagenId() {
+    public String getImagenIdString() {
         return imagenId != null ? imagenId.toString() : null;
     }
 
@@ -63,12 +101,46 @@ public class Publicacion {
         this.fecha = fecha;
     }
 
-    // Métodos helper para el frontend
+    public ObjectId getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(ObjectId usuarioId) {
+        this.usuarioId = usuarioId;
+    }
+    
+    public int getRatingLikes() {
+		return ratingLikes;
+	}
+
+	public int getRatingDislikes() {
+		return ratingDislikes;
+	}
+
+	// Métodos helper para el frontend
     public String getImagenIdAsString() {
         return imagenId != null ? imagenId.toString() : null;
     }
 
     public String getIdAsString() {
         return id != null ? id.toString() : null;
+    }
+    
+    public void setRatingLikes(int ratingLikes) {
+		this.ratingLikes = ratingLikes;
+	}
+
+	public void setRatingDislikes(int ratingDislikes) {
+		this.ratingDislikes = ratingDislikes;
+	}
+
+	@Override
+    public String toString() {
+        return "Publicacion{" +
+                "publicacionId='" + publicacionId + '\'' +
+                ", titulo='" + titulo + '\'' +
+                ", precio=" + precio +
+                ", fecha=" + fecha +
+                '}';
     }
 }

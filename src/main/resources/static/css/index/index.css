@@ -226,6 +226,7 @@ select {
 
 /* HERO BANNER */
 .hero-banner {
+    margin-top: 120px; /* Igual que en login.css */
     background: linear-gradient(to right, #00A3FF, #FF4D8C);
     color: white;
     padding: 4rem 0;

@@ -1,15 +1,16 @@
 package controlador;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.bson.Document;
-import mongoDB.MongoDBCrud;
+
+import modelo.Usuario;
+
 import servicio.UsuarioService;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.regex.Pattern;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/auth")
@@ -17,7 +18,6 @@ public class LoginController {
 
     private final UsuarioService usuarioService;
 
-    @Autowired
     public LoginController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
@@ -30,11 +30,17 @@ public class LoginController {
     @PostMapping("/validar")
     public String validarUsuario(@RequestParam String email, 
                                 @RequestParam String password,
+                                HttpSession session,
                                 RedirectAttributes redirectAttributes) {
         try {
             if (usuarioService.validarCredenciales(email, password)) {
-                // Usuario autenticado correctamente
-                redirectAttributes.addFlashAttribute("mensaje", "¡Bienvenido!");
+                Usuario usuario = usuarioService.obtenerUsuario(email);
+                // Guardar datos del usuario en la sesión
+                session.setAttribute("usuarioId", usuario.getId());
+                session.setAttribute("nombreUsuario", usuario.getNombre());
+                session.setAttribute("email", usuario.getEmail());
+                
+                redirectAttributes.addFlashAttribute("mensaje", "¡Bienvenido " + usuario.getNombre() + "!");
                 redirectAttributes.addFlashAttribute("tipoMensaje", "success");
                 return "redirect:/user";
             } else {
@@ -86,6 +92,12 @@ public class LoginController {
             redirectAttributes.addFlashAttribute("tipoMensaje", "error");
             return "redirect:/auth/login";
         }
+    }
+
+    @GetMapping("/logout")
+    public String cerrarSesion(HttpSession session) {
+        session.invalidate();
+        return "redirect:/";
     }
 
     private boolean validarEmail(String email) {

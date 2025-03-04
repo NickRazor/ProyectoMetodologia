@@ -1,13 +1,14 @@
 package servicio;
 
 import modelo.Usuario;
+
 import mongoDB.MongoDBCrud;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.List;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 @Service
 public class UsuarioService {
@@ -60,6 +61,24 @@ public class UsuarioService {
         return usuario;
     }
 
+    public Usuario obtenerUsuarioPorId(ObjectId id) {
+        try {
+            Document doc = mongoCrud.read(id);
+            if (doc != null) {
+                Usuario usuario = new Usuario();
+                usuario.setId(doc.getObjectId("_id"));
+                usuario.setNombre(doc.getString("nombre"));
+                usuario.setEmail(doc.getString("email"));
+                usuario.setAceptaNotificaciones(doc.getBoolean("aceptaNotificaciones", false));
+                return usuario;
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public boolean validarCredenciales(String email, String password) {
         Usuario usuario = obtenerUsuario(email);
         if (usuario == null) {
@@ -83,6 +102,41 @@ public class UsuarioService {
         }
     }
 
+    public boolean actualizarPassword(ObjectId id, String newPassword) {
+        try {
+            // Encriptar la nueva contraseña
+            String hashedPassword = hashPassword(newPassword);
+            
+            // Crear documento con la nueva contraseña
+            Document updateDoc = new Document("$set", new Document("password", hashedPassword));
+            
+            // Actualizar en la base de datos
+            mongoCrud.update(id, updateDoc);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error al hashear la contraseña", e);
+        }
+    }
+
     public boolean eliminarUsuario(ObjectId id) {
         try {
             mongoCrud.delete(id);
@@ -91,10 +145,5 @@ public class UsuarioService {
             e.printStackTrace();
             return false;
         }
-    }
-
-    private boolean validarEmail(String email) {
-        String regexPattern = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        return email != null && email.matches(regexPattern);
     }
 }

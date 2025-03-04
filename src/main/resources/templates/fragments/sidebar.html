@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet" th:href="@{/css/common/sidebar.css}">
+</head>
+<body>
+    <aside th:fragment="sidebar" class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <a th:href="@{/}" class="sidebar-link">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </a>
+            <a th:href="@{/user}" class="sidebar-link">
+                <i class="fas fa-upload"></i>
+                <span>Subir Producto</span>
+            </a>
+            <a th:href="@{/user/mis-publicaciones}" class="sidebar-link">
+                <i class="fas fa-list"></i>
+                <span>Mis Publicaciones</span>
+            </a>
+            <a th:href="@{/user/perfil}" class="sidebar-link">
+                <i class="fas fa-user"></i>
+                <span>Mi Perfil</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-heart"></i>
+                <span>Favoritos</span>
+            </a>
+            <a href="#" class="sidebar-link">
+                <i class="fas fa-cog"></i>
+                <span>Configuración</span>
+            </a>
+            <a th:href="@{/auth/logout}" class="sidebar-link">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </nav>
+    </aside>
+</body>
+</html>

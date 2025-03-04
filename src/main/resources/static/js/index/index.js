@@ -42,42 +42,39 @@ function createProductCard(product) {
     return card;
 }
 
+function renderProducts(data, container) {
+    container.innerHTML = '';
+    data.forEach(publicacion => {
+        console.log('Creando tarjeta para:', publicacion); // Debug
+        const card = createProductCard(publicacion);
+        console.log('Tarjeta creada:', card); // Debug
+        container.appendChild(card);
+    });
+}
+
 function loadProducts(containerId) {
     const container = document.getElementById(containerId);
-    if (!container) {
-        console.error('Contenedor no encontrado:', containerId);
-        return;
-    }
-
-    console.log('Iniciando carga de productos...'); // Debug
-    container.innerHTML = '<p>Cargando productos...</p>';
-
+    console.log('Iniciando carga de productos...');
+    
     fetch('/api/publicaciones')
         .then(response => {
-            console.log('Respuesta recibida:', response.status); // Debug
+            console.log('Estado de la respuesta:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
-        .then(publicaciones => {
-            console.log('Datos recibidos:', publicaciones); // Debug
-            if (!Array.isArray(publicaciones) || publicaciones.length === 0) {
+        .then(data => {
+            console.log('Datos recibidos:', data);
+            if (!data || data.length === 0) {
                 container.innerHTML = '<p>No hay productos disponibles</p>';
                 return;
             }
-            
-            container.innerHTML = '';
-            publicaciones.forEach(publicacion => {
-                console.log('Creando tarjeta para:', publicacion); // Debug
-                const card = createProductCard(publicacion);
-                console.log('Tarjeta creada:', card); // Debug
-                container.appendChild(card);
-            });
+            renderProducts(data, container);
         })
         .catch(error => {
-            console.error('Error cargando productos:', error);
-            container.innerHTML = `<p>Error cargando los productos: ${error.message}</p>`;
+            console.error('Error:', error);
+            container.innerHTML = '<p>Error al cargar los productos</p>';
         });
 }
 

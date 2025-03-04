@@ -1,62 +1,56 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Market</title>
-    <!-- Agregar favicon -->
+    <title>Editar Publicación - Happy Market</title>
     <link rel="icon" type="image/png" th:href="@{/img/index/favilogo.png}">
-    <!-- Favicon para Apple -->
-    <link rel="apple-touch-icon" th:href="@{/img/index/favilogo.png}">
     <link rel="stylesheet" th:href="@{/css/common/header.css}">
-    <link rel="stylesheet" th:href="@{/css/common/sidebar.css}"> <!-- Agregar esta línea -->
+    <link rel="stylesheet" th:href="@{/css/common/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/user/user.css}">
     <link rel="stylesheet" th:href="@{/css/user/subir.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
-
 <body>
     <div class="container">
-        <!-- Incluir el header -->
+        <!-- Header -->
         <div th:replace="~{fragments/header :: header}"></div>
 
-        <!-- Alerta de mensajes -->
-        <div th:if="${mensaje}" th:class="${'alert alert-' + tipoMensaje}" id="mensajeAlerta">
-            <span th:text="${mensaje}"></span>
-            <button type="button" class="close-alert" onclick="this.parentElement.style.display='none'">×</button>
-        </div>
-
-        <!-- Main Content -->
         <div class="main-container">
-            <!-- Incluir el sidebar -->
+            <!-- Sidebar -->
             <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
             <!-- Contenido principal -->
             <main class="main-content">
                 <div class="upload-form-container">
                     <div class="upload-form">
-                        <h2>Nueva Publicación</h2>
-                        <form th:action="@{/api/publicar}" method="post" enctype="multipart/form-data">
+                        <h2>Editar Publicación</h2>
+                        <form th:action="@{/api/publicaciones/{id}/editar(id=${publicacion.id})}" 
+                              method="post" 
+                              enctype="multipart/form-data">
                             <div class="form-group">
                                 <label for="titulo">Título:</label>
-                                <input type="text" id="titulo" name="titulo" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="archivo">Imagen:</label>
-                                <input type="file" id="archivo" name="archivo" accept="image/*" required>
+                                <input type="text" id="titulo" name="titulo" 
+                                       th:value="${publicacion.titulo}" required>
                             </div>
                             <div class="form-group">
                                 <label for="descripcion">Descripción:</label>
-                                <textarea id="descripcion" name="descripcion" required></textarea>
+                                <textarea id="descripcion" name="descripcion" 
+                                          required th:text="${publicacion.descripcion}"></textarea>
                             </div>
                             <div class="form-group">
                                 <label for="precio">Precio:</label>
-                                <input type="number" id="precio" name="precio" step="0.01" required>
+                                <input type="number" id="precio" name="precio" 
+                                       th:value="${publicacion.precio}" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="archivo">Nueva imagen (opcional):</label>
+                                <input type="file" id="archivo" name="archivo" accept="image/*">
+                                <small>Deja este campo vacío si no deseas cambiar la imagen</small>
                             </div>
                             <div class="button-group">
-                                <button type="submit" class="btn btn-primary">Publicar</button>
-                                <a th:href="@{/}" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                <a th:href="@{/user/mis-publicaciones}" class="btn btn-secondary">Cancelar</a>
                             </div>
                         </form>
                     </div>
@@ -64,8 +58,5 @@
             </main>
         </div>
     </div>
-
-    <script th:src="@{/js/user/user.js}"></script>
 </body>
-
 </html>

@@ -13,37 +13,19 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" th:href="@{/img/login/favilogo.png}">
+
+    <!-- Estilos comunes -->
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Otros estilos específicos -->
 </head>
 <body>
-
-    <!-- Encabezado -->
-    <header class="header">
-        <img th:src="@{/img/happy-market-logo.jpg}" alt="Happy Market">
-        <div class="search-container">
-            <button class="send-to-ecuador">Enviar a ECUADOR</button>
-            <div class="search-bar">
-                <input type="text" placeholder="Buscar productos, marcas y otros">
-                <button>🔍</button>
-            </div>
-        </div>
-        <div class="flag">
-            <span></span>ES
-            <img th:src="@{/img/bandera.png}" alt="Ecuador">
-        </div>
-    </header>
-
-    <!-- Barra de Navegación -->
-    <nav class="nav-bar">
-        <button>Explorar</button>
-        <button>Electrónicos</button>
-        <button>Casa y Jardín</button>
-        <button>Juguetes</button>
-        <button>Relojes</button>
-    </nav>
+    <div th:replace="~{fragments/header :: header}"></div>
+    <!-- Resto del contenido -->
 
     <!-- Login -->
     <div class="login-container">
-        <img th:src="@{/img/happy-market-logo.jpg}" alt="Happy Market">
+        <img th:src="@{/img/index/logohm.jpg}" alt="Happy Market">
         <h2>Inicia sesión/Regístrate</h2>
         <form th:action="@{/auth/validar}" method="post">
             <input type="email" name="email" placeholder="Dirección email o celular" required>
@@ -73,7 +55,7 @@
         </button>
 
         <h2>Crear Cuenta</h2>
-        <img th:src="@{/img/happy-market-logo.jpg}" alt="Happy Market">
+        <img th:src="@{/img/index/logohm.jpg}" alt="Happy Market">
         
         <form th:action="@{/auth/registrar}" method="post" id="registerForm">
             <input type="text" name="nombre" placeholder="Nombre Completo" required>

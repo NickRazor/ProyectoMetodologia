@@ -13,7 +13,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class GridFSService {
@@ -21,7 +20,6 @@ public class GridFSService {
     private static final int TARGET_WIDTH = 185;
     private static final int TARGET_HEIGHT = 115;
 
-    @Autowired
     public GridFSService(MongoDatabase database) {
         this.gridFSBucket = GridFSBuckets.create(database);
     }
@@ -86,5 +84,15 @@ public class GridFSService {
     // Método auxiliar para obtener la extensión del archivo
     private String getFileExtension(String filename) {
         return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+    }
+
+    public boolean deleteFile(ObjectId fileId) {
+        try {
+            gridFSBucket.delete(fileId);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

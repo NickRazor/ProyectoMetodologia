@@ -9,52 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="icon" type="image/png" th:href="@{/img/index/favilogo.png}">
     <script src="https://unpkg.com/iconLib@latest"></script>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
 </head>
 
 <body>
-    <header class="header">
-        <div class="container header-container">
-            <div class="header-main">
-                <div class="header-left">
-                    <a th:href="@{/}" class="logo">
-                        <img th:src="@{/img/index/logohm.jpg}" alt="Logo" class="logo-img">
-                    </a>
-
-                </div>
-                <div class="search-bar">
-                    <input class="search-input" type="text" placeholder="Buscar productos...">
-                </div>
-                <div class="header-actions">
-                    <button class="location-button">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                        <span>Ecuador</span>
-                    </button>
-                    <a th:href="@{/auth/login}" class="user-icon">
-                        <i class="fas fa-user-circle"></i>
-                        <span>Iniciar sesión</span>
-                    </a>
-                    <button class="cart-button">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="21" r="1"></circle>
-                            <circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
-                        <span class="cart-count">0</span>
-                    </button>
-                </div>
-            </div>
-            <nav class="main-nav">
-                <a href="#">Explorar</a>
-                <a href="#">Electrónicos</a>
-                <a href="#">Casa y Jardín</a>
-                <a href="#">Juguetes</a>
-                <a href="#">Ropa</a>
-            </nav>
-        </div>
-    </header>
+        <div th:replace="~{fragments/header :: header}"></div>
 
     <div class="hero-banner">
         <div class="container banner-content">
@@ -71,14 +30,10 @@
         </div>
     </div>
     <main class="container main-content">
-        <section class="products-section">
-            <h2>Productos Disponibles</h2>
-            <div id="products-container" class="products-container">
-                <!-- Las tarjetas se generarán aquí dinámicamente -->
-            </div>
-        </section>
+        <div id="products-container" class="products-grid">
+            <!-- Las tarjetas de productos se cargarán aquí dinámicamente -->
+        </div>
     </main>
-    <!-- Sección de productos con las nuevas tarjetitas -->
     <main class="container main-content">
         <!-- Sección Productos Destacados -->
         <section class="products-section">
@@ -96,8 +51,6 @@
             </div>
         </section>
     </main>
-
-
 
     <!-- Footer -->
     <div class="footer">

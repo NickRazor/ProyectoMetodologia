@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+</head>
+<body>
+    <header th:fragment="header" class="header">
+        <div class="container header-container">
+            <div class="header-main">
+                <div class="header-left">
+                    <!-- Botón de menú solo para usuarios logueados -->
+                    <a th:href="@{/}" class="logo">
+                        <img th:src="@{/img/index/logohm.jpg}" alt="Logo" class="logo-img">
+                    </a>
+                </div>
+                
+                <div class="search-container">
+                    <button class="send-to-ecuador">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Enviar a ECUADOR</span>
+                    </button>
+                    <div class="search-bar">
+                        <input type="text" placeholder="Buscar productos...">
+                        <button><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <!-- Usuario logueado -->
+                    <div th:if="${session.nombreUsuario}" class="user-info">
+                        <a th:href="@{/user}" class="user-icon">
+                            <i class="fas fa-user-circle"></i>
+                            <span th:text="${session.nombreUsuario}">Usuario</span>
+                        </a>
+                    </div>
+                    <!-- Usuario no logueado -->
+                    <a th:unless="${session.nombreUsuario}" th:href="@{/auth/login}" class="user-icon">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Iniciar sesión</span>
+                    </a>
+                    
+                    <button class="cart-button">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navegación principal -->
+            <nav class="main-nav">
+                <a href="#">Explorar</a>
+                <a href="#">Electrónicos</a>
+                <a href="#">Casa y Jardín</a>
+                <a href="#">Juguetes</a>
+                <a href="#">Ropa</a>
+            </nav>
+        </div>
+    </header>
+</body>
+</html>

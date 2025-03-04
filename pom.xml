@@ -40,19 +40,19 @@
 	    <dependency>
 	        <groupId>org.mongodb</groupId>
 	        <artifactId>mongodb-driver-sync</artifactId>
-	        <version>4.10.2</version>
+	        <version>5.3.1</version>
 	    </dependency>
 	    
 	    <dependency>
 	        <groupId>org.mongodb</groupId>
 	        <artifactId>mongodb-driver-core</artifactId>
-	        <version>4.10.2</version>
+	        <version>5.3.1</version>
 	    </dependency>
 	    
 	    <dependency>
 	        <groupId>org.mongodb</groupId>
 	        <artifactId>bson</artifactId>
-	        <version>4.10.2</version>
+	        <version>5.3.1</version>
 	    </dependency>
 
 	    <!-- Spring Data MongoDB -->
@@ -90,7 +90,15 @@
 		    <artifactId>thumbnailator</artifactId>
 		    <version>0.4.14</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api -->
+<dependency>
+    <groupId>jakarta.servlet</groupId>
+    <artifactId>jakarta.servlet-api</artifactId>
+    <version>6.1.0</version>
+    <scope>provided</scope>
+</dependency>
 	</dependencies>
+
 
 	<build>
 		<plugins>
