@@ -37,25 +37,52 @@
                 <div class="upload-form-container">
                     <div class="upload-form">
                         <h2>Nueva Publicación</h2>
+                        
+                        <!-- Vista previa del producto -->
+                        <div class="producto-preview">
+                            <img src="" alt="Vista previa" class="producto-img" id="preview-image">
+                            <div class="producto-info">
+                                <h3 id="preview-titulo">Nombre del artículo</h3>
+                                <p id="preview-categoria">Categoría: Sin seleccionar</p> <!-- Agregar esta línea -->
+                                <p class="precio" id="preview-precio">Precio $ 0.00</p>
+                                <p id="preview-descripcion">Descripción:</p>
+                            </div>
+                        </div>
+
                         <form th:action="@{/api/publicar}" method="post" enctype="multipart/form-data">
                             <div class="form-group">
-                                <label for="titulo">Título:</label>
-                                <input type="text" id="titulo" name="titulo" required>
+                                <label for="titulo">Nombre del producto:</label>
+                                <input type="text" id="titulo" name="titulo" class="form-control" required>
                             </div>
+                            
                             <div class="form-group">
-                                <label for="archivo">Imagen:</label>
-                                <input type="file" id="archivo" name="archivo" accept="image/*" required>
+                                <label for="categoria">Categoría:</label>
+                                <select id="categoria" name="categoria" class="form-control" required>
+                                    <option value="">Seleccionar categoría</option>
+                                    <option value="electronics">Electrónicos</option>
+                                    <option value="home">Casa y Jardín</option>
+                                    <option value="toys">Juguetes</option>
+                                    <option value="watches">Relojes</option>
+                                </select>
                             </div>
+
+                            <div class="form-group">
+                                <label for="archivo">Imágenes del producto:</label>
+                                <input type="file" id="archivo" name="archivo" accept="image/*" class="form-control" required>
+                            </div>
+
                             <div class="form-group">
                                 <label for="descripcion">Descripción:</label>
-                                <textarea id="descripcion" name="descripcion" required></textarea>
+                                <textarea id="descripcion" name="descripcion" class="form-control" rows="5" required></textarea>
                             </div>
+
                             <div class="form-group">
-                                <label for="precio">Precio:</label>
-                                <input type="number" id="precio" name="precio" step="0.01" required>
+                                <label for="precio">Precio ($):</label>
+                                <input type="number" id="precio" name="precio" step="0.01" class="form-control" required>
                             </div>
+
                             <div class="button-group">
-                                <button type="submit" class="btn btn-primary">Publicar</button>
+                                <button type="submit" class="btn btn-primary">Publicar producto</button>
                                 <a th:href="@{/}" class="btn btn-secondary">Cancelar</a>
                             </div>
                         </form>

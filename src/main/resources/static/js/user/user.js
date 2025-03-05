@@ -26,6 +26,54 @@ document.addEventListener('DOMContentLoaded', function() {
             mensajeAlerta.style.display = 'none';
         }, 5000);
     }
+
+    // Vista previa del título
+    document.getElementById('titulo').addEventListener('input', function(e) {
+        document.getElementById('preview-titulo').textContent = e.target.value || 'Nombre del artículo';
+    });
+
+    // Vista previa de la categoría
+    document.getElementById('categoria').addEventListener('change', function(e) {
+        const categoriaSeleccionada = e.target.value;
+        const categoriaMostrada = document.getElementById('preview-categoria');
+        
+        // Mapeo de valores a nombres más amigables
+        const categoriasNombres = {
+            'electronics': 'Electrónicos',
+            'home': 'Casa y Jardín',
+            'toys': 'Juguetes',
+            'watches': 'Relojes',
+            'clothing': 'Ropa'
+        };
+
+        if (categoriaMostrada) {
+            categoriaMostrada.textContent = categoriaSeleccionada ? 
+                `Categoría: ${categoriasNombres[categoriaSeleccionada] || categoriaSeleccionada}` : 
+                'Categoría: Sin seleccionar';
+        }
+    });
+
+    // Vista previa del precio
+    document.getElementById('precio').addEventListener('input', function(e) {
+        document.getElementById('preview-precio').textContent = `Precio $ ${e.target.value || '0.00'}`;
+    });
+
+    // Vista previa de la descripción
+    document.getElementById('descripcion').addEventListener('input', function(e) {
+        document.getElementById('preview-descripcion').textContent = e.target.value || 'Descripción:';
+    });
+
+    // Vista previa de la imagen
+    document.getElementById('archivo').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-image').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
 });
 
 function editarPublicacion(id) {

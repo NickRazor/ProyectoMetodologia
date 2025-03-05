@@ -3,12 +3,11 @@
     width: 250px;
     height: calc(100vh - 60px); /* Ajustado para dar espacio al margen */
     position: fixed;
-    left: 0; /* Quitamos el margen izquierdo */
-    top: 60px; /* Se alinea justo debajo del header */
+    left: 1; /* Quitamos el margen izquierdo */
+    top: 100px; /* Se alinea justo debajo del header */
     background-color: #ffffff;
-    border-right: 1px solid #333; /* Cambiamos el borde a solo el lado derecho */
     border-radius: 0; /* Quitamos el border radius */
-    padding: 1.5rem 1rem;
+    padding: 0.75rem 0.5rem; /* Reducido de 1.5rem 1rem */
     transition: all 0.3s ease;
     z-index: 90; /* Reducimos el z-index para que esté detrás del header */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -17,19 +16,23 @@
 .sidebar-nav {
     display: flex;
     flex-direction: column;
-    padding: 1rem;
-    gap: 0.75rem;
+    padding: 0.75rem; /* Aumentado ligeramente para mejor espaciado */
+    gap: 0.5rem;
+    border: 1px solid #e0e0e0; /* Borde gris claro */
+    border-radius: 8px; /* Bordes redondeados */
+    background-color: #ffffff; /* Asegura fondo blanco */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Sombra sutil */
 }
 
 .sidebar-link {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem; /* Reducido de 0.75rem 1rem */
     color: #333;
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: 6px; /* Reducido de 8px */
     transition: all 0.2s ease;
-    gap: 1rem;
+    gap: 0.75rem; /* Reducido de 1rem */
     border: 1px solid transparent;
 }
 
@@ -45,14 +48,14 @@
 }
 
 .sidebar-link i {
-    width: 20px;
-    font-size: 1.1rem;
+    width: 16px; /* Reducido de 20px */
+    font-size: 1rem; /* Reducido de 1.1rem */
     color: #333;
     text-align: center;
 }
 
 .sidebar-link span {
-    font-size: 0.95rem;
+    font-size: 0.9rem; /* Reducido de 0.95rem */
     font-weight: 500;
     color: #333;
 }

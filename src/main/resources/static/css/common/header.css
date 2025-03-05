@@ -41,15 +41,113 @@
     max-width: 800px;
 }
 
-.send-to-ecuador {
+.country-selector {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+}
+
+.country-selector i {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.country-select {
+    appearance: none;
+    background: transparent;
     border: none;
-    background: none;
+    padding: 0.5rem 2rem 0.5rem 0.5rem;
+    font-size: 0.9rem;
+    color: #333;
     cursor: pointer;
-    white-space: nowrap;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+}
+
+.country-select option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.country-select option img {
+    width: 20px;
+    height: 15px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+.country-select:hover {
+    background-color: #f3f4f6;
+    border-radius: 4px;
+}
+
+.country-select:focus {
+    outline: none;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+}
+
+.custom-select {
+    position: relative;
+    cursor: pointer;
+    z-index: 1001; /* Asegurar que está por encima de otros elementos */
+}
+
+.select-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+    min-width: 150px;
+}
+
+.select-trigger:hover {
+    background-color: #f3f4f6;
+}
+
+.flag-icon {
+    width: 20px;
+    height: 15px;
+    object-fit: contain;
+}
+
+.select-options {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 1002; /* Mayor que el padre */
+    width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.custom-select.active .select-options {
+    display: block !important; /* Forzar visualización */
+}
+
+.select-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.select-option:hover {
+    background-color: #f3f4f6;
 }
 
 .search-bar {
@@ -147,5 +245,10 @@
         overflow-x: auto;
         padding: 0.5rem;
         gap: 1rem;
+    }
+
+    .country-select {
+        font-size: 0.8rem;
+        padding: 0.4rem 1.5rem 0.4rem 0.4rem;
     }
 }

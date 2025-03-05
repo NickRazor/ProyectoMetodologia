@@ -14,10 +14,34 @@
                 </div>
                 
                 <div class="search-container">
-                    <button class="send-to-ecuador">
+                    <div class="country-selector">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>Enviar a ECUADOR</span>
-                    </button>
+                        <div class="custom-select" id="countrySelect">
+                            <div class="select-trigger" id="selectTrigger">
+                                <img src="https://flagcdn.com/ec.svg" alt="Ecuador" class="flag-icon">
+                                <span>Ecuador</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="select-options" id="selectOptions">
+                                <div class="select-option" data-value="EC" data-flag="ec">
+                                    <img src="https://flagcdn.com/ec.svg" alt="Ecuador" class="flag-icon">
+                                    <span>Ecuador</span>
+                                </div>
+                                <div class="select-option" data-value="AR" data-flag="ar">
+                                    <img src="https://flagcdn.com/ar.svg" alt="Argentina" class="flag-icon">
+                                    <span>Argentina</span>
+                                </div>
+                                <div class="select-option" data-value="BO" data-flag="bo">
+                                    <img src="https://flagcdn.com/bo.svg" alt="Bolivia" class="flag-icon">
+                                    <span>Bolivia</span>
+                                </div>
+                                <div class="select-option" data-value="BR" data-flag="br">
+                                    <img src="https://flagcdn.com/br.svg" alt="Brasil" class="flag-icon">
+                                    <span>Brasil</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="search-bar">
                         <input type="text" placeholder="Buscar productos...">
                         <button><i class="fas fa-search"></i></button>
@@ -38,10 +62,11 @@
                         <span>Iniciar sesión</span>
                     </a>
                     
-                    <button class="cart-button">
+                    <!-- Reemplazar el botón del carrito actual con: -->
+                    <a th:href="@{/carrito}" class="cart-button" id="cartButton">
                         <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-count">0</span>
-                    </button>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </a>
                 </div>
             </div>
 
@@ -54,6 +79,8 @@
                 <a href="#">Ropa</a>
             </nav>
         </div>
+        <!-- Mover el script dentro del fragmento -->
+        <script type="text/javascript" th:src="@{/js/common/header.js}"></script>
     </header>
 </body>
 </html>

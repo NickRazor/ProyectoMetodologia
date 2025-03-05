@@ -79,3 +79,44 @@
 .button-group .btn:hover {
     opacity: 0.9;
 }
+
+.producto-preview {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    background-color: #fff;
+}
+
+.producto-img {
+    width: 80px;
+    height: 80px;
+    margin-right: 15px;
+    object-fit: contain;
+}
+
+.producto-info {
+    flex: 1;
+}
+
+.producto-info h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.precio {
+    font-weight: bold;
+    color: #007bff;
+    margin: 5px 0;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}

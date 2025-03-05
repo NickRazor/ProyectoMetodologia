@@ -5,6 +5,7 @@ import modelo.Usuario;
 import mongoDB.MongoDBCrud;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.security.MessageDigest;
@@ -14,10 +15,10 @@ import java.security.NoSuchAlgorithmException;
 public class UsuarioService {
     private final MongoDBCrud mongoCrud;
     private final BCryptPasswordEncoder passwordEncoder;
-    private static final String MONGO_URI = "mongodb+srv://rslopez6:m7gHnopaMlKxbJyb@pruebacluster.uyxx2.mongodb.net/?retryWrites=true&w=majority&appName=PruebaCluster";
 
-    public UsuarioService() {
-        this.mongoCrud = new MongoDBCrud(MONGO_URI, "happymarket", "usuarios");
+    @Autowired
+    public UsuarioService(MongoDBCrud mongoCrud) {
+        this.mongoCrud = mongoCrud;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 

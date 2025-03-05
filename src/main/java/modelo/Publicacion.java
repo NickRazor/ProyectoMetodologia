@@ -14,6 +14,7 @@ public class Publicacion {
     private int ratingLikes;
     private int ratingDislikes;
     private ObjectId usuarioId;
+    private String categoria; // Nueva variable
 
     // Constructor actualizado
     public Publicacion() {
@@ -22,7 +23,7 @@ public class Publicacion {
     }
 
     // Método para generar ID único y amigable
-    private String generarPublicacionId() {
+    public String generarPublicacionId() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
         String timeStamp = sdf.format(new java.util.Date());
         return "PUB-" + timeStamp + "-" + System.nanoTime() % 1000;
@@ -46,6 +47,7 @@ public class Publicacion {
     public boolean isValid() {
         return titulo != null && !titulo.trim().isEmpty() &&
                descripcion != null && !descripcion.trim().isEmpty() &&
+               categoria != null && !categoria.trim().isEmpty() &&
                precio >= 0 &&
                imagenId != null;
     }
@@ -122,8 +124,14 @@ public class Publicacion {
         return imagenId != null ? imagenId.toString() : null;
     }
 
+    // Modificar el método getIdAsString para asegurar que devuelve un string válido
     public String getIdAsString() {
         return id != null ? id.toString() : null;
+    }
+    
+    // Agregar un nuevo método para obtener el ID más amigable
+    public String getIdentificador() {
+        return this.publicacionId != null ? this.publicacionId : this.getIdAsString();
     }
     
     public void setRatingLikes(int ratingLikes) {
@@ -133,6 +141,15 @@ public class Publicacion {
 	public void setRatingDislikes(int ratingDislikes) {
 		this.ratingDislikes = ratingDislikes;
 	}
+
+    // Agregar getter y setter para categoria
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
+    }
 
 	@Override
     public String toString() {

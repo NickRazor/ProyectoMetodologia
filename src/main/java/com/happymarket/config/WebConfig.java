@@ -27,6 +27,9 @@ public class WebConfig implements WebMvcConfigurer {
         
         registry.addResourceHandler("/templates/**")
                 .addResourceLocations("classpath:/templates/");
+        
+        registry.addResourceHandler("/img/**")
+                .addResourceLocations("classpath:/static/img/");
     }
 
     @Override

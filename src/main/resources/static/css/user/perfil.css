@@ -202,6 +202,17 @@
     margin-right: 0.5rem;
 }
 
+.main-container {
+    display: flex;
+    margin-top: 90px; /* Espacio para el header */
+}
+
+.main-content {
+    flex: 1;
+    margin-left: 250px; /* Ancho del sidebar */
+    padding: 2rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .perfil-container {
@@ -229,6 +240,11 @@
     }
 
     .btn {
+        width: 100%;
+    }
+
+    .main-content {
+        margin-left: 0; /* Elimina el margen cuando el sidebar está oculto */
         width: 100%;
     }
 }

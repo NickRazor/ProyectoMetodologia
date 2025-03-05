@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métodos de Pago - Happy Market</title>
+    <link rel="icon" type="image/png" th:href="@{/img/index/favilogo.png}">
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/common/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/user/metodopago.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div th:replace="~{fragments/header :: header}"></div>
+
+        <div class="main-container">
+            <!-- Sidebar -->
+            <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+            <!-- Contenido principal -->
+            <main class="main-content">
+                <section class="metodos-pago">
+                    <h2>Métodos de Pago</h2>
+
+                    <div class="info-privacidad">
+                        <i class="fas fa-lock"></i>
+                        <p>Todos los datos son privados y seguros</p>
+                    </div>
+
+                    <div class="separador"></div>
+
+                    <!-- Métodos guardados -->
+                    <div class="metodo-guardado">
+                        <div class="metodo-info">
+                            <img src="https://www.paypalobjects.com/digitalassets/c/website/marketing/na/us/logo-center/Badge_2.png" 
+                                 alt="PayPal" class="logo-paypal">
+                            <p class="correo-usuario">usuario@gmail.com</p>
+                        </div>
+                        <button class="btn-eliminar">Eliminar</button>
+                    </div>
+
+                    <!-- Agregar nueva tarjeta -->
+                    <div class="agregar-tarjeta">
+                        <button class="btn-agregar">
+                            <i class="fas fa-plus"></i>
+                            Agregar una tarjeta de crédito o débito
+                        </button>
+                    </div>
+
+                    <!-- Opciones de pago disponibles -->
+                    <div class="opciones-pago">
+                        <h3>Aceptamos:</h3>
+                        <div class="logos-pago">
+                            <img src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" alt="Visa">
+                            <img src="https://brand.mastercard.com/content/dam/mccom/brandcenter/thumbnails/mastercard_vrt_pos_92px_2x.png" alt="Mastercard">
+                            <img src="https://www.paypalobjects.com/digitalassets/c/website/marketing/na/us/logo-center/Badge_2.png" alt="PayPal">
+                            <img src="https://logo.clearbit.com/discover.com" alt="Discover">
+                            <img src="https://logo.clearbit.com/americanexpress.com" alt="American Express">
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script th:src="@{/js/user/metodopago.js}"></script>
+</body>
+</html>

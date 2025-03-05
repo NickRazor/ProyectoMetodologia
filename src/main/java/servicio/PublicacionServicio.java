@@ -4,6 +4,7 @@ import mongoDB.MongoDBCrud;
 import mongoDB.GridFSService;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,14 +26,14 @@ import java.util.ArrayList;
 public class PublicacionServicio {
     private final MongoDBCrud mongoCrud;
     private final GridFSService gridFSService;
-    private static final String MONGO_URI = "mongodb+srv://rslopez6:m7gHnopaMlKxbJyb@pruebacluster.uyxx2.mongodb.net/?retryWrites=true&w=majority&appName=PruebaCluster";
 
-    public PublicacionServicio() {
-        this.mongoCrud = new MongoDBCrud(MONGO_URI, "happymarket", "publicaciones");
-        this.gridFSService = new GridFSService(mongoCrud.getDatabase());
+    @Autowired
+    public PublicacionServicio(MongoDBCrud mongoCrud, GridFSService gridFSService) {
+        this.mongoCrud = mongoCrud;
+        this.gridFSService = gridFSService;
     }
 
-    public ObjectId guardarPublicacion(MultipartFile archivo, String titulo, String descripcion, double precio, ObjectId usuarioId) throws IOException {
+    public ObjectId guardarPublicacion(MultipartFile archivo, String titulo, String descripcion, double precio, String categoria, ObjectId usuarioId) throws IOException {
         try {
             // Guardar archivo temporalmente
             File tempFile = convertMultiPartToFile(archivo);
@@ -55,6 +56,7 @@ public class PublicacionServicio {
                         .append("titulo", titulo)
                         .append("descripcion", descripcion)
                         .append("precio", precio)
+                        .append("categoria", categoria) // Agregar categoría
                         .append("imagenId", fileId)
                         .append("fecha", new java.util.Date())
                         .append("usuarioId", usuarioId.toString());  // Asegurarnos de guardarlo siempre como String
@@ -79,7 +81,55 @@ public class PublicacionServicio {
     }
 
     public List<Publicacion> obtenerPublicaciones() {
-        return mongoCrud.obtenerPublicaciones();
+        try {
+            List<Document> documentos = mongoCrud.findAllDocuments();
+            List<Publicacion> publicaciones = new ArrayList<>();
+            
+            for (Document doc : documentos) {
+                try {
+                    System.out.println("Documento encontrado: " + doc.toJson()); // Debug
+                    
+                    Publicacion pub = new Publicacion();
+                    pub.setId(doc.getObjectId("_id"));
+                    pub.setTitulo(doc.getString("titulo"));
+                    pub.setDescripcion(doc.getString("descripcion"));
+                    pub.setPrecio(doc.getDouble("precio"));
+                    
+                    // Asegurarse de obtener la categoría
+                    String categoria = doc.getString("categoria");
+                    System.out.println("Categoría encontrada: " + categoria); // Debug
+                    pub.setCategoria(categoria);
+                    
+                    // Manejar el imagenId
+                    Object imagenIdObj = doc.get("imagenId");
+                    if (imagenIdObj instanceof String) {
+                        pub.setImagenId(new ObjectId((String) imagenIdObj));
+                    } else if (imagenIdObj instanceof ObjectId) {
+                        pub.setImagenId((ObjectId) imagenIdObj);
+                    }
+                    
+                    pub.setFecha(doc.getDate("fecha"));
+                    
+                    // Manejar el usuarioId
+                    Object userIdObj = doc.get("usuarioId");
+                    if (userIdObj instanceof String) {
+                        pub.setUsuarioId(new ObjectId((String) userIdObj));
+                    } else if (userIdObj instanceof ObjectId) {
+                        pub.setUsuarioId((ObjectId) userIdObj);
+                    }
+                    
+                    publicaciones.add(pub);
+                } catch (Exception e) {
+                    System.err.println("Error procesando documento: " + doc.toJson());
+                    e.printStackTrace();
+                }
+            }
+            
+            return publicaciones;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     public List<Publicacion> obtenerPublicacionesPorUsuario(ObjectId usuarioId) {
@@ -128,6 +178,8 @@ public class PublicacionServicio {
                     } else if (userIdObj instanceof ObjectId) {
                         pub.setUsuarioId((ObjectId) userIdObj);
                     }
+                    
+                    pub.setCategoria(doc.getString("categoria")); // Añadir esta línea
                     
                     publicaciones.add(pub);
                 } catch (Exception e) {
@@ -184,7 +236,7 @@ public class PublicacionServicio {
         return mongoCrud.obtenerPublicacionPorId(id);
     }
 
-    public boolean actualizarPublicacion(ObjectId id, String titulo, String descripcion, double precio, MultipartFile archivo) {
+    public boolean actualizarPublicacion(ObjectId id, String titulo, String descripcion, double precio, String categoria, MultipartFile archivo) {
         try {
             Publicacion publicacion = obtenerPublicacionPorId(id);
             if (publicacion == null) {
@@ -195,6 +247,7 @@ public class PublicacionServicio {
             publicacion.setTitulo(titulo);
             publicacion.setDescripcion(descripcion);
             publicacion.setPrecio(precio);
+            publicacion.setCategoria(categoria); // Agregar categoría
 
             // Si hay una nueva imagen, actualizarla
             if (archivo != null && !archivo.isEmpty()) {

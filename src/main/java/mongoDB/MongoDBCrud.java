@@ -5,12 +5,16 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
 
 import modelo.Publicacion;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -18,16 +22,46 @@ import java.util.List;
 
 @Component
 public class MongoDBCrud {
-    private MongoClient mongoClient;
-    private MongoDatabase database;
-    private MongoCollection<Document> collection;
+    private final MongoClient mongoClient;
+    private final MongoDatabase database;
+    private final MongoCollection<Document> collection;
 
-    public MongoDBCrud(@Value("${mongo.uri}") String uri, 
-                       @Value("${mongo.dbName}") String dbName, 
-                       @Value("${mongo.collectionName}") String collectionName) {
-        this.mongoClient = MongoClients.create(uri);
-        this.database = mongoClient.getDatabase(dbName);
-        this.collection = database.getCollection(collectionName);
+    @Autowired
+    public MongoDBCrud(@Value("${spring.data.mongodb.uri}") String uri,
+                      @Value("${spring.data.mongodb.database}") String dbName) {
+        try {
+            System.out.println("Intentando conectar a MongoDB...");
+            
+            ConnectionString connectionString = new ConnectionString(uri);
+            MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .applyToSslSettings(builder -> {
+                    builder.enabled(true);
+                    builder.invalidHostNameAllowed(true);
+                })
+                .retryWrites(true)
+                .build();
+
+            this.mongoClient = MongoClients.create(settings);
+            this.database = mongoClient.getDatabase(dbName);
+            this.collection = database.getCollection("publicaciones");
+            
+            database.runCommand(new Document("ping", 1));
+            System.out.println("Conexión exitosa a MongoDB Atlas");
+        } catch (Exception e) {
+            String errorMsg = "Error al conectar con MongoDB: " + e.getMessage();
+            System.err.println(errorMsg);
+            e.printStackTrace();
+            throw new RuntimeException(errorMsg, e);
+        }
+    }
+    
+    public MongoClient getMongoClient() {
+        return mongoClient;
+    }
+
+    public MongoCollection<Document> getCollection() {
+        return collection;
     }
 
     // Crear un nuevo documento
@@ -68,21 +102,25 @@ public class MongoDBCrud {
     public List<Publicacion> obtenerPublicaciones() {
         List<Publicacion> publicaciones = new ArrayList<>();
         for (Document doc : collection.find()) {
-            Publicacion pub = new Publicacion();
             try {
-                // Convertir String a ObjectId si es necesario
-                Object idObj = doc.get("_id");
-                if (idObj instanceof String) {
-                    pub.setId(new ObjectId((String) idObj));
-                } else if (idObj instanceof ObjectId) {
-                    pub.setId((ObjectId) idObj);
-                }
-
+                Publicacion pub = new Publicacion();
+                
+                // ID y campos básicos
+                pub.setId(doc.getObjectId("_id"));
                 pub.setTitulo(doc.getString("titulo"));
                 pub.setDescripcion(doc.getString("descripcion"));
                 pub.setPrecio(doc.getDouble("precio"));
+                pub.setFecha(doc.getDate("fecha"));
+                pub.setCategoria(doc.getString("categoria")); // Añadido categoria
+                
+                // PublicacionId
+                String pubId = doc.getString("publicacionId");
+                if (pubId == null) {
+                    pubId = pub.generarPublicacionId(); // Generar si no existe
+                }
+                pub.setPublicacionId(pubId);
 
-                // Manejar la conversión del imagenId
+                // Manejar imagenId
                 Object imgIdObj = doc.get("imagenId");
                 if (imgIdObj instanceof String) {
                     pub.setImagenId(new ObjectId((String) imgIdObj));
@@ -90,7 +128,25 @@ public class MongoDBCrud {
                     pub.setImagenId((ObjectId) imgIdObj);
                 }
 
+                // Usuario ID
+                Object userIdObj = doc.get("usuarioId");
+                if (userIdObj instanceof String) {
+                    pub.setUsuarioId(new ObjectId((String) userIdObj));
+                } else if (userIdObj instanceof ObjectId) {
+                    pub.setUsuarioId((ObjectId) userIdObj);
+                }
+
+                // Ratings
+                Integer likes = doc.getInteger("ratingLikes", 0);
+                Integer dislikes = doc.getInteger("ratingDislikes", 0);
+                pub.setRatingLikes(likes);
+                pub.setRatingDislikes(dislikes);
+
                 publicaciones.add(pub);
+                
+                // Debug
+                System.out.println("Publicación procesada: " + pub.toString());
+                
             } catch (Exception e) {
                 System.err.println("Error al procesar documento: " + doc.toJson());
                 e.printStackTrace();
@@ -102,12 +158,16 @@ public class MongoDBCrud {
 
     public void guardarPublicacion(Publicacion publicacion) {
         Document doc = new Document()
+            .append("publicacionId", publicacion.getPublicacionId())
             .append("titulo", publicacion.getTitulo())
             .append("descripcion", publicacion.getDescripcion())
             .append("precio", publicacion.getPrecio())
+            .append("categoria", publicacion.getCategoria())
             .append("imagenId", publicacion.getImagenId())
             .append("fecha", new java.util.Date())
-            .append("usuarioId", publicacion.getUsuarioId());  // Agregar usuarioId
+            .append("usuarioId", publicacion.getUsuarioId())
+            .append("ratingLikes", 0)
+            .append("ratingDislikes", 0);
 
         collection.insertOne(doc);
     }
@@ -237,6 +297,18 @@ public class MongoDBCrud {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public List<Document> findAllDocuments() {
+        List<Document> documentos = new ArrayList<>();
+        try {
+            collection.find().into(documentos);
+            return documentos;
+        } catch (Exception e) {
+            System.err.println("Error al obtener todos los documentos: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 }

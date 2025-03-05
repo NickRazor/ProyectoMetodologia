@@ -33,7 +33,7 @@ public class PublicacionController {
 
     @GetMapping("/subir")
     public String mostrarFormularioSubida() {
-        return "user"; // Cambiar de "subir" a "user"
+        return "user"; 
     }
 
     @GetMapping("/")
@@ -48,6 +48,7 @@ public class PublicacionController {
                           @RequestParam("titulo") String titulo,
                           @RequestParam("descripcion") String descripcion,
                           @RequestParam("precio") double precio,
+                          @RequestParam("categoria") String categoria, // Nuevo parámetro
                           HttpSession session,
                           RedirectAttributes redirectAttributes) {
         try {
@@ -59,8 +60,8 @@ public class PublicacionController {
 
             ObjectId usuarioId = new ObjectId(usuarioIdObj.toString());
             
-            // Guardar la publicación
-            ObjectId publicacionId = publicacionServicio.guardarPublicacion(archivo, titulo, descripcion, precio, usuarioId);
+            // Guardar la publicación con categoría
+            ObjectId publicacionId = publicacionServicio.guardarPublicacion(archivo, titulo, descripcion, precio, categoria, usuarioId);
             
             if (publicacionId != null) {
                 redirectAttributes.addFlashAttribute("mensaje", "Publicación creada exitosamente");
@@ -86,10 +87,14 @@ public class PublicacionController {
     }
 
     @GetMapping("/publicaciones")
-    @ResponseBody  // Agregar esta anotación para endpoints REST
+    @ResponseBody
     public List<Publicacion> obtenerPublicaciones() {
         List<Publicacion> publicaciones = publicacionServicio.obtenerPublicaciones();
-        System.out.println("Publicaciones encontradas: " + publicaciones.size()); // Debug
+        System.out.println("Publicaciones encontradas: " + publicaciones.size());
+        // Añadir logging para verificar las categorías
+        publicaciones.forEach(p -> {
+            System.out.println("Publicación ID: " + p.getId() + ", Categoría: " + p.getCategoria());
+        });
         return publicaciones;
     }
 
@@ -183,6 +188,7 @@ public class PublicacionController {
                                       @RequestParam("titulo") String titulo,
                                       @RequestParam("descripcion") String descripcion,
                                       @RequestParam("precio") double precio,
+                                      @RequestParam("categoria") String categoria, // Nuevo parámetro
                                       @RequestParam(value = "archivo", required = false) MultipartFile archivo,
                                       HttpSession session,
                                       RedirectAttributes redirectAttributes) {
@@ -201,7 +207,7 @@ public class PublicacionController {
                 return "redirect:/user/mis-publicaciones";
             }
 
-            boolean actualizado = publicacionServicio.actualizarPublicacion(publicacionId, titulo, descripcion, precio, archivo);
+            boolean actualizado = publicacionServicio.actualizarPublicacion(publicacionId, titulo, descripcion, precio, categoria, archivo);
             
             if (actualizado) {
                 redirectAttributes.addFlashAttribute("mensaje", "Publicación actualizada exitosamente");

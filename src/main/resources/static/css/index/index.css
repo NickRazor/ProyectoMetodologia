@@ -395,6 +395,49 @@ select {
     color: var(--primary);
 }
 
+.product-info {
+    padding: 1rem;
+}
+
+.product-category {
+    display: inline-block;
+    background-color: #f0f0f0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #666;
+    margin: 0.5rem 0;
+}
+
+.product-date {
+    display: block;
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.product-rating {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.product-rating span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.product-rating .likes i {
+    color: #28a745;
+}
+
+.product-rating .dislikes i {
+    color: #dc3545;
+}
+
 /* FOOTER */
 .footer {
     display: flex;
