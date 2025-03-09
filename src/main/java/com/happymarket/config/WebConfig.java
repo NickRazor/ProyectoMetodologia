@@ -13,14 +13,14 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 public class WebConfig implements WebMvcConfigurer {
     
     @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
+    public void addViewControllers(@SuppressWarnings("null") ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("index");
         registry.addViewController("/subir").setViewName("subir");
         registry.addViewController("/publicar").setViewName("publicar");
     }
 
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@SuppressWarnings("null") ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .setCachePeriod(0);
@@ -33,7 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
+    public void addInterceptors(@SuppressWarnings("null") InterceptorRegistry registry) {
         registry.addInterceptor(new SessionInterceptor());
     }
 }

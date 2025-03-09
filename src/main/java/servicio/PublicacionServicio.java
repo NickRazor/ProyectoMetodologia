@@ -4,7 +4,6 @@ import mongoDB.MongoDBCrud;
 import mongoDB.GridFSService;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,6 @@ public class PublicacionServicio {
     private final MongoDBCrud mongoCrud;
     private final GridFSService gridFSService;
 
-    @Autowired
     public PublicacionServicio(
             @Qualifier("publicacionesMongoDBCrud") MongoDBCrud mongoCrud, 
             GridFSService gridFSService) {

@@ -11,7 +11,6 @@ import modelo.Publicacion;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -22,8 +21,6 @@ public class MongoDBCrud {
     private final MongoClient mongoClient;
     private final MongoDatabase database;
     private final MongoCollection<Document> collection;
-
-    @Autowired
     public MongoDBCrud(@Value("${spring.data.mongodb.uri}") String uri,
                       @Value("${spring.data.mongodb.database}") String dbName,
                       @Value("${spring.data.mongodb.collection}") String collectionName) {

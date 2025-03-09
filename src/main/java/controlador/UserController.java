@@ -3,7 +3,6 @@ package controlador;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.servlet.http.HttpSession; // Cambiar a javax.servlet
 import modelo.Publicacion;
 import servicio.PublicacionServicio;
@@ -14,8 +13,6 @@ import org.bson.types.ObjectId;
 @Controller
 public class UserController {
     private final PublicacionServicio publicacionServicio;
-
-    @Autowired
     public UserController(PublicacionServicio publicacionServicio) {
         this.publicacionServicio = publicacionServicio;
     }

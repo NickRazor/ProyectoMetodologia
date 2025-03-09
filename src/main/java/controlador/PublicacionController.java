@@ -7,13 +7,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import modelo.Publicacion;
 import servicio.PublicacionServicio;
-import mongoDB.MongoDBCrud;
-import mongoDB.GridFSService;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -21,14 +18,10 @@ import org.springframework.stereotype.Controller;
 public class PublicacionController {
 
     private final PublicacionServicio publicacionServicio;
-    private final MongoDBCrud mongoDBCrud;
-    private final GridFSService gridFSService;
 
-    @Autowired
-    public PublicacionController(PublicacionServicio publicacionServicio, MongoDBCrud mongoDBCrud, GridFSService gridFSService) {
+
+    public PublicacionController(PublicacionServicio publicacionServicio) {
         this.publicacionServicio = publicacionServicio;
-        this.mongoDBCrud = mongoDBCrud;
-        this.gridFSService = gridFSService;
     }
 
     @GetMapping("/subir")

@@ -1,11 +1,9 @@
 package servicio;
 
 import modelo.Usuario;
-
 import mongoDB.MongoDBCrud;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,7 +15,6 @@ public class UsuarioService {
     private final MongoDBCrud mongoCrud;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
     public UsuarioService(@Qualifier("usuariosMongoDBCrud") MongoDBCrud mongoCrud) {
         this.mongoCrud = mongoCrud;
         this.passwordEncoder = new BCryptPasswordEncoder();

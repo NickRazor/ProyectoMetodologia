@@ -2,18 +2,15 @@ package servicio;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
-
 import modelo.CarritoItem;
 import modelo.Orden;
 import modelo.Publicacion;
@@ -29,8 +26,6 @@ public class CarritoServicio {
 
     @Autowired
     private OrdenServicio ordenServicio;
-
-    @Autowired
     public CarritoServicio(
             @Qualifier("carritoMongoDBCrud") MongoDBCrud mongoCrud, 
             PublicacionServicio publicacionServicio) {

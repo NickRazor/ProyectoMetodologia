@@ -1,16 +1,8 @@
 package modelo;
 
 import org.bson.types.ObjectId;
-
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import lombok.Data;
-
-import java.io.IOException;
-
 @Data
 public class CarritoItem {
     @JsonSerialize(using = ObjectIdSerializer.class)

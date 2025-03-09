@@ -14,7 +14,6 @@ public class ImagenController {
     
     private final GridFSService gridFSService;
 
-    @Autowired
     public ImagenController(GridFSService gridFSService) {
         this.gridFSService = gridFSService;
     }
