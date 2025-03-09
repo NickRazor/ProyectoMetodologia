@@ -152,30 +152,22 @@ public class PublicacionController {
                                          Model model, 
                                          HttpSession session) {
         try {
-            // Verificar si el usuario está autenticado
-            ObjectId usuarioId = (ObjectId) session.getAttribute("usuarioId");
-            if (usuarioId == null) {
-                return "redirect:/auth/login";
-            }
-
-            // Convertir el ID de String a ObjectId
             ObjectId publicacionId = new ObjectId(id);
-            
-            // Obtener la publicación
             Publicacion publicacion = publicacionServicio.obtenerPublicacionPorId(publicacionId);
             
-            if (publicacion == null) {
-                return "redirect:/user/mis-publicaciones";
+            if (publicacion != null) {
+                System.out.println("Categoría en el controlador: " + publicacion.getCategoria());
+                if (publicacion.getCategoria() == null || publicacion.getCategoria().isEmpty()) {
+                    publicacion.setCategoria("electronics"); // Valor por defecto si es null
+                }
+                model.addAttribute("publicacion", publicacion);
+                model.addAttribute("categorias", List.of(
+                    new String[]{"electronics", "Electrónicos"},
+                    new String[]{"home", "Casa y Jardín"},
+                    new String[]{"toys", "Juguetes"},
+                    new String[]{"watches", "Relojes"}
+                ));
             }
-
-            // Verificar que la publicación pertenezca al usuario
-            if (!publicacion.perteneceAUsuario(usuarioId)) {
-                return "redirect:/user/mis-publicaciones";
-            }
-
-            // Agregar la publicación al modelo
-            model.addAttribute("publicacion", publicacion);
-            
             return "editar-publicacion";
         } catch (Exception e) {
             e.printStackTrace();

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Publicación - Happy Market</title>
     <link rel="icon" type="image/png" th:href="@{/img/index/favilogo.png}">
+    <link rel="apple-touch-icon" th:href="@{/img/index/favilogo.png}">
     <link rel="stylesheet" th:href="@{/css/common/header.css}">
     <link rel="stylesheet" th:href="@{/css/common/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/user/user.css}">
@@ -16,6 +17,12 @@
         <!-- Header -->
         <div th:replace="~{fragments/header :: header}"></div>
 
+        <!-- Alerta de mensajes -->
+        <div th:if="${mensaje}" th:class="${'alert alert-' + tipoMensaje}" id="mensajeAlerta">
+            <span th:text="${mensaje}"></span>
+            <button type="button" class="close-alert" onclick="this.parentElement.style.display='none'">×</button>
+        </div>
+
         <div class="main-container">
             <!-- Sidebar -->
             <div th:replace="~{fragments/sidebar :: sidebar}"></div>
@@ -25,29 +32,107 @@
                 <div class="upload-form-container">
                     <div class="upload-form">
                         <h2>Editar Publicación</h2>
+
+                        <!-- Vista previa del producto -->
+                        <div class="producto-preview">
+                            <div class="preview-container">
+                                <div class="preview-image-container">
+                                    <img th:src="@{/api/imagen/{id}(id=${publicacion.imagenId})}" 
+                                         th:data-default-src="@{/api/imagen/{id}(id=${publicacion.imagenId})}"
+                                         alt="Vista previa" 
+                                         class="producto-img" 
+                                         id="preview-image">
+                                </div>
+                                <div class="preview-info">
+                                    <h3 id="preview-titulo" th:text="${publicacion.titulo}">Nombre del artículo</h3>
+                                    
+                                    <p id="preview-categoria" 
+                                       th:with="categoriaNombre=${
+                                            publicacion.categoria == 'electronics' ? 'Electrónicos' : 
+                                            publicacion.categoria == 'home' ? 'Casa y Jardín' : 
+                                            publicacion.categoria == 'toys' ? 'Juguetes' : 
+                                            publicacion.categoria == 'watches' ? 'Relojes' : 'Sin categoría'
+                                       }"
+                                       th:text="'Categoría: ' + ${categoriaNombre}">
+                                       Categoría: Sin seleccionar
+                                    </p>
+                                    
+                                    <p class="precio" id="preview-precio" 
+                                       th:text="'Precio $ ' + ${#numbers.formatDecimal(publicacion.precio, 1, 2)}">
+                                       Precio $ 0.00
+                                    </p>
+                                    
+                                    <p id="preview-descripcion" th:text="${publicacion.descripcion}">
+                                        Descripción:
+                                    </p>
+
+                                    <div class="preview-details">
+                                        <p id="preview-id" 
+                                           th:data-friendly-id="${publicacion.publicacionId}"
+                                           th:text="'Ref: ' + ${publicacion.publicacionId}">
+                                            Ref: PROD-00000
+                                        </p>
+                                        <p id="preview-fecha" 
+                                           th:text="'Fecha: ' + ${#dates.format(publicacion.fecha, 'dd/MM/yyyy HH:mm')}">
+                                            Fecha: No disponible
+                                        </p>
+                                        <div class="preview-ratings">
+                                            <p><i class="fas fa-thumbs-up"></i>
+                                               <span id="preview-likes" th:text="${publicacion.ratingLikes}">0</span>
+                                            </p>
+                                            <p><i class="fas fa-thumbs-down"></i>
+                                               <span id="preview-dislikes" th:text="${publicacion.ratingDislikes}">0</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <form th:action="@{/api/publicaciones/{id}/editar(id=${publicacion.id})}" 
                               method="post" 
                               enctype="multipart/form-data">
                             <div class="form-group">
-                                <label for="titulo">Título:</label>
+                                <label for="titulo">Nombre del producto:</label>
                                 <input type="text" id="titulo" name="titulo" 
-                                       th:value="${publicacion.titulo}" required>
+                                       class="form-control" required 
+                                       th:value="${publicacion.titulo}">
                             </div>
+
+                            <div class="form-group">
+                                <label for="categoria">Categoría:</label>
+                                <select id="categoria" name="categoria" class="form-control" required>
+                                    <option value="">Seleccionar categoría</option>
+                                    <option th:each="cat : ${categorias}"
+                                            th:value="${cat[0]}"
+                                            th:text="${cat[1]}"
+                                            th:selected="${publicacion.categoria == cat[0]}">
+                                        Categoría
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="archivo">Imágenes del producto:</label>
+                                <input type="file" id="archivo" name="archivo" 
+                                       accept="image/*" class="form-control">
+                                <small>Deja este campo vacío si no deseas cambiar la imagen</small>
+                            </div>
+
                             <div class="form-group">
                                 <label for="descripcion">Descripción:</label>
                                 <textarea id="descripcion" name="descripcion" 
-                                          required th:text="${publicacion.descripcion}"></textarea>
+                                          class="form-control" rows="5" required 
+                                          th:text="${publicacion.descripcion}"></textarea>
                             </div>
+
                             <div class="form-group">
-                                <label for="precio">Precio:</label>
+                                <label for="precio">Precio ($):</label>
                                 <input type="number" id="precio" name="precio" 
-                                       th:value="${publicacion.precio}" step="0.01" required>
+                                       step="0.01" class="form-control" required 
+                                       th:value="${publicacion.precio}">
                             </div>
-                            <div class="form-group">
-                                <label for="archivo">Nueva imagen (opcional):</label>
-                                <input type="file" id="archivo" name="archivo" accept="image/*">
-                                <small>Deja este campo vacío si no deseas cambiar la imagen</small>
-                            </div>
+
                             <div class="button-group">
                                 <button type="submit" class="btn btn-primary">Guardar cambios</button>
                                 <a th:href="@{/user/mis-publicaciones}" class="btn btn-secondary">Cancelar</a>
@@ -58,5 +143,8 @@
             </main>
         </div>
     </div>
+
+    <!-- Scripts -->
+    <script th:src="@{/js/user/publicaciones.js}"></script>
 </body>
 </html>

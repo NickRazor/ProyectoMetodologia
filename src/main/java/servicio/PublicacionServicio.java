@@ -5,12 +5,15 @@ import mongoDB.GridFSService;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.mongodb.client.model.Filters;
 
 import modelo.Publicacion;
 import net.coobird.thumbnailator.Thumbnails;
@@ -28,7 +31,9 @@ public class PublicacionServicio {
     private final GridFSService gridFSService;
 
     @Autowired
-    public PublicacionServicio(MongoDBCrud mongoCrud, GridFSService gridFSService) {
+    public PublicacionServicio(
+            @Qualifier("publicacionesMongoDBCrud") MongoDBCrud mongoCrud, 
+            GridFSService gridFSService) {
         this.mongoCrud = mongoCrud;
         this.gridFSService = gridFSService;
     }
@@ -87,20 +92,31 @@ public class PublicacionServicio {
             
             for (Document doc : documentos) {
                 try {
-                    System.out.println("Documento encontrado: " + doc.toJson()); // Debug
+                    System.out.println("Procesando documento: " + doc.toJson()); // Debug
                     
                     Publicacion pub = new Publicacion();
+                    // Datos básicos
                     pub.setId(doc.getObjectId("_id"));
                     pub.setTitulo(doc.getString("titulo"));
                     pub.setDescripcion(doc.getString("descripcion"));
                     pub.setPrecio(doc.getDouble("precio"));
+                    pub.setCategoria(doc.getString("categoria"));
+                    pub.setFecha(doc.getDate("fecha"));
                     
-                    // Asegurarse de obtener la categoría
-                    String categoria = doc.getString("categoria");
-                    System.out.println("Categoría encontrada: " + categoria); // Debug
-                    pub.setCategoria(categoria);
+                    // ID de publicación amigable
+                    String publicacionId = doc.getString("publicacionId");
+                    if (publicacionId == null) {
+                        pub.setPublicacionId(pub.generarPublicacionId());
+                    } else {
+                        pub.setPublicacionId(publicacionId);
+                    }
                     
-                    // Manejar el imagenId
+                    // Ratings
+                    pub.setRatingLikes(doc.getInteger("ratingLikes", 0));
+                    pub.setRatingDislikes(doc.getInteger("ratingDislikes", 0));
+                    
+                    // Manejo de IDs de objeto
+                    // ImagenId
                     Object imagenIdObj = doc.get("imagenId");
                     if (imagenIdObj instanceof String) {
                         pub.setImagenId(new ObjectId((String) imagenIdObj));
@@ -108,9 +124,7 @@ public class PublicacionServicio {
                         pub.setImagenId((ObjectId) imagenIdObj);
                     }
                     
-                    pub.setFecha(doc.getDate("fecha"));
-                    
-                    // Manejar el usuarioId
+                    // UsuarioId
                     Object userIdObj = doc.get("usuarioId");
                     if (userIdObj instanceof String) {
                         pub.setUsuarioId(new ObjectId((String) userIdObj));
@@ -118,15 +132,21 @@ public class PublicacionServicio {
                         pub.setUsuarioId((ObjectId) userIdObj);
                     }
                     
+                    System.out.println("Publicación procesada: " + pub.toString()); // Debug
                     publicaciones.add(pub);
+                    
                 } catch (Exception e) {
                     System.err.println("Error procesando documento: " + doc.toJson());
                     e.printStackTrace();
+                    // Continuar con el siguiente documento
                 }
             }
             
+            System.out.println("Total publicaciones procesadas: " + publicaciones.size());
             return publicaciones;
+            
         } catch (Exception e) {
+            System.err.println("Error al obtener publicaciones: " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -134,32 +154,42 @@ public class PublicacionServicio {
 
     public List<Publicacion> obtenerPublicacionesPorUsuario(ObjectId usuarioId) {
         try {
-            // Añadir logging para debug
             System.out.println("Buscando publicaciones para usuario: " + usuarioId.toString());
             
-            // Cambiar el filtro para buscar tanto por String como por ObjectId
             Document filtro = new Document("$or", List.of(
                 new Document("usuarioId", usuarioId.toString()),
                 new Document("usuarioId", usuarioId)
             ));
             
             List<Document> documentos = mongoCrud.findDocuments(filtro);
-            
-            // Logging para verificar documentos encontrados
             System.out.println("Documentos encontrados: " + documentos.size());
             
             List<Publicacion> publicaciones = new ArrayList<>();
             
             for (Document doc : documentos) {
                 try {
-                    // Logging del documento para debug
-                    System.out.println("Documento encontrado: " + doc.toJson());
+                    System.out.println("Procesando documento: " + doc.toJson());
                     
                     Publicacion pub = new Publicacion();
+                    // Datos básicos
                     pub.setId(doc.getObjectId("_id"));
                     pub.setTitulo(doc.getString("titulo"));
                     pub.setDescripcion(doc.getString("descripcion"));
                     pub.setPrecio(doc.getDouble("precio"));
+                    pub.setCategoria(doc.getString("categoria")); // Agregamos la categoría
+                    pub.setFecha(doc.getDate("fecha"));
+                    
+                    // ID de publicación amigable
+                    String publicacionId = doc.getString("publicacionId");
+                    if (publicacionId == null) {
+                        pub.setPublicacionId(pub.generarPublicacionId());
+                    } else {
+                        pub.setPublicacionId(publicacionId);
+                    }
+                    
+                    // Ratings
+                    pub.setRatingLikes(doc.getInteger("ratingLikes", 0));
+                    pub.setRatingDislikes(doc.getInteger("ratingDislikes", 0));
                     
                     // Manejar el imagenId
                     Object imagenIdObj = doc.get("imagenId");
@@ -169,8 +199,6 @@ public class PublicacionServicio {
                         pub.setImagenId((ObjectId) imagenIdObj);
                     }
                     
-                    pub.setFecha(doc.getDate("fecha"));
-                    
                     // Manejar el usuarioId
                     Object userIdObj = doc.get("usuarioId");
                     if (userIdObj instanceof String) {
@@ -179,22 +207,21 @@ public class PublicacionServicio {
                         pub.setUsuarioId((ObjectId) userIdObj);
                     }
                     
-                    pub.setCategoria(doc.getString("categoria")); // Añadir esta línea
-                    
+                    System.out.println("Publicación procesada: " + pub.toString());
                     publicaciones.add(pub);
+                    
                 } catch (Exception e) {
                     System.err.println("Error procesando documento: " + doc.toJson());
                     e.printStackTrace();
                 }
             }
             
-            // Logging final
             System.out.println("Total de publicaciones procesadas: " + publicaciones.size());
-            
             return publicaciones;
+            
         } catch (Exception e) {
-            e.printStackTrace();
             System.err.println("Error al obtener publicaciones del usuario: " + usuarioId);
+            e.printStackTrace();
             return new ArrayList<>();
         }
     }
@@ -238,44 +265,37 @@ public class PublicacionServicio {
 
     public boolean actualizarPublicacion(ObjectId id, String titulo, String descripcion, double precio, String categoria, MultipartFile archivo) {
         try {
-            Publicacion publicacion = obtenerPublicacionPorId(id);
-            if (publicacion == null) {
-                return false;
-            }
+            Document updateDoc = new Document()
+                .append("titulo", titulo)
+                .append("descripcion", descripcion)
+                .append("precio", precio)
+                .append("categoria", categoria);  // Asegurarnos de incluir la categoría
 
-            // Actualizar los campos básicos
-            publicacion.setTitulo(titulo);
-            publicacion.setDescripcion(descripcion);
-            publicacion.setPrecio(precio);
-            publicacion.setCategoria(categoria); // Agregar categoría
-
-            // Si hay una nueva imagen, actualizarla
             if (archivo != null && !archivo.isEmpty()) {
-                // Eliminar la imagen anterior si existe
-                if (publicacion.getImagenId() != null) {
-                    gridFSService.deleteFile(publicacion.getImagenId());
-                }
-
-                // Subir la nueva imagen
+                // Guardar archivo temporalmente
                 File tempFile = convertMultiPartToFile(archivo);
+                
+                // Redimensionar la imagen a 185x115
                 File resizedFile = new File("resized_" + tempFile.getName());
                 Thumbnails.of(tempFile)
-                         .size(185, 115)
-                         .toFile(resizedFile);
-
+                          .size(185, 115)
+                          .toFile(resizedFile);
+                
+                // Subir archivo redimensionado a GridFS usando FileInputStream
                 try (FileInputStream fis = new FileInputStream(resizedFile)) {
                     ObjectId fileId = gridFSService.uploadFile(fis, resizedFile.getName());
-                    publicacion.setImagenId(fileId);
+                    updateDoc.append("imagenId", fileId);
                 }
-
-                // Limpiar archivos temporales
+                
+                // Eliminar archivos temporales
                 tempFile.delete();
                 resizedFile.delete();
             }
 
-            // Actualizar en la base de datos
-            mongoCrud.actualizarPublicacion(publicacion);
-            return true;
+            return mongoCrud.getCollection().updateOne(
+                Filters.eq("_id", id),
+                new Document("$set", updateDoc)
+            ).getModifiedCount() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

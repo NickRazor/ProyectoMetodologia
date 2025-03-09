@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import exception.UnauthorizedException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,44 +27,53 @@ public class CarritoController {
     
     @Autowired
     private CarritoServicio carritoServicio;
+
+    // Método auxiliar para verificar autenticación
+    private ObjectId verificarAutenticacion(HttpSession session) {
+        ObjectId usuarioId = (ObjectId) session.getAttribute("usuarioId");
+        if (usuarioId == null) {
+            logger.warn("Intento de acceso al carrito sin autenticación");
+            throw new UnauthorizedException("Usuario no autenticado");
+        }
+        return usuarioId;
+    }
     
     @PostMapping("/agregar")
     public ResponseEntity<?> agregarAlCarrito(@RequestBody CarritoRequest request, HttpSession session) {
         try {
-            ObjectId usuarioId = (ObjectId) session.getAttribute("usuarioId");
-            if (usuarioId == null) {
-                return ResponseEntity.status(401).body("Usuario no autenticado");
-            }
-
-            // Convertir el String a ObjectId
-            ObjectId productoId = new ObjectId(request.getProductoId());
+            ObjectId usuarioId = verificarAutenticacion(session);
+            ObjectId productoId = new ObjectId(request.getProductoId().toString());
+            
             carritoServicio.agregarAlCarrito(usuarioId, productoId, request.getCantidad());
             
-            // Devolver respuesta en formato JSON
-            Map<String, String> response = new HashMap<>();
+            // Obtener carrito actualizado
+            List<CarritoItem> carritoActualizado = carritoServicio.obtenerCarrito(usuarioId);
+            double total = carritoServicio.calcularTotal(usuarioId);
+            
+            Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Producto agregado al carrito exitosamente");
+            response.put("items", carritoActualizado);
+            response.put("total", total);
+            
             return ResponseEntity.ok(response);
             
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("mensaje", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("mensaje", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.badRequest()
+                .body(Map.of("mensaje", e.getMessage()));
         } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("mensaje", "Error al agregar el producto al carrito");
-            return ResponseEntity.internalServerError().body(error);
+            logger.error("Error al agregar al carrito: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("mensaje", "Error al agregar el producto al carrito"));
         }
     }
     
     @GetMapping
     public ResponseEntity<?> obtenerCarrito(HttpSession session) {
         try {
-            ObjectId usuarioId = (ObjectId) session.getAttribute("usuarioId");
-            if (usuarioId == null) {
-                logger.warn("Intento de acceso al carrito sin autenticación");
-                return ResponseEntity.status(401).body("Usuario no autenticado");
-            }
-
+            ObjectId usuarioId = verificarAutenticacion(session);
             List<CarritoItem> items = carritoServicio.obtenerCarrito(usuarioId);
             double total = carritoServicio.calcularTotal(usuarioId);
             
@@ -70,42 +82,53 @@ public class CarritoController {
             response.put("total", total);
             
             return ResponseEntity.ok(response);
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("mensaje", e.getMessage()));
         } catch (Exception e) {
             logger.error("Error al obtener el carrito: ", e);
-            return ResponseEntity.status(500)
-                .body("Error interno del servidor: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("mensaje", "Error interno del servidor"));
         }
     }
     
     @PutMapping("/actualizar/{itemId}")
-    public ResponseEntity<?> actualizarCantidad(@PathVariable String itemId, @RequestBody Map<String, Integer> request) {
+    public ResponseEntity<?> actualizarCantidad(
+            @PathVariable String itemId,
+            @RequestBody Map<String, Integer> request) {
         try {
-            ObjectId id = new ObjectId(itemId);
+            // Validar el ID
+            ObjectId id;
+            try {
+                id = new ObjectId(itemId);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                    .body("ID de item inválido");
+            }
+
+            // Validar la cantidad
             Integer nuevaCantidad = request.get("cantidad");
-            
             if (nuevaCantidad == null || nuevaCantidad < 1) {
                 return ResponseEntity.badRequest()
                     .body("La cantidad debe ser un número positivo");
             }
 
-            // Actualizar en el servicio
+            // Actualizar cantidad
             carritoServicio.actualizarCantidad(id, nuevaCantidad);
 
-            // Obtener el carrito actualizado
-            List<CarritoItem> carritoActualizado = carritoServicio.obtenerCarrito(null); // null para usuario actual
+            // Obtener carrito actualizado
+            List<CarritoItem> carritoActualizado = carritoServicio.obtenerCarrito(null);
             double total = carritoServicio.calcularTotal(null);
 
-            // Devolver respuesta con datos actualizados
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Cantidad actualizada correctamente");
             response.put("items", carritoActualizado);
             response.put("total", total);
-            
-            return ResponseEntity.ok(response);
 
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                .body("ID de item inválido: " + e.getMessage());
+                .body("Error al actualizar cantidad: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error al actualizar cantidad: " + e.getMessage());

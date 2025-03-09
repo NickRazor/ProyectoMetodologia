@@ -6,19 +6,24 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
 
 import modelo.CarritoItem;
 import modelo.Orden;
 import modelo.Publicacion;
 import mongoDB.MongoDBCrud;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CarritoServicio {
+    private static final Logger logger = LoggerFactory.getLogger(CarritoServicio.class);
     private final MongoDBCrud mongoCrud;
     private final PublicacionServicio publicacionServicio;
 
@@ -26,7 +31,9 @@ public class CarritoServicio {
     private OrdenServicio ordenServicio;
 
     @Autowired
-    public CarritoServicio(MongoDBCrud mongoCrud, PublicacionServicio publicacionServicio) {
+    public CarritoServicio(
+            @Qualifier("carritoMongoDBCrud") MongoDBCrud mongoCrud, 
+            PublicacionServicio publicacionServicio) {
         this.mongoCrud = mongoCrud;
         this.publicacionServicio = publicacionServicio;
     }
@@ -70,19 +77,62 @@ public class CarritoServicio {
     
     public void actualizarCantidad(ObjectId itemId, int nuevaCantidad) {
         try {
-            // Validar que el item exista
-            Document item = mongoCrud.getCollection().find(Filters.eq("_id", itemId)).first();
-            if (item == null) {
-                throw new IllegalArgumentException("Item no encontrado en el carrito");
+            logger.debug("Intentando actualizar cantidad: itemId={}, nuevaCantidad={}", itemId, nuevaCantidad);
+
+            // Validar entrada
+            if (itemId == null) {
+                logger.error("ID del item es nulo");
+                throw new IllegalArgumentException("ID del item no puede ser nulo");
+            }
+            if (nuevaCantidad < 1) {
+                logger.error("Cantidad inválida: {}", nuevaCantidad);
+                throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
             }
 
-            // Actualizar la cantidad
-            mongoCrud.getCollection().updateOne(
-                Filters.eq("_id", itemId),
+            // Imprimir todos los documentos en la colección para debug
+            logger.debug("Contenido actual de la colección carrito:");
+            mongoCrud.getCollection().find().forEach(doc -> 
+                logger.debug("Item en carrito: _id={}, productoId={}, cantidad={}", 
+                    doc.getObjectId("_id"), 
+                    doc.getObjectId("productoId"),
+                    doc.getInteger("cantidad"))
+            );
+
+            // Buscar el item
+            Document item = mongoCrud.getCollection().find(Filters.eq("_id", itemId)).first();
+            if (item == null) {
+                logger.warn("Item no encontrado: {}. Buscando por string...", itemId);
+                
+                // Intentar buscar por string en caso de que el ID esté en otro formato
+                item = mongoCrud.getCollection().find(
+                    Filters.or(
+                        Filters.eq("_id", itemId.toString()),
+                        Filters.eq("_id", new ObjectId(itemId.toString()))
+                    )
+                ).first();
+                
+                if (item == null) {
+                    logger.error("Item definitivamente no encontrado para ID: {}", itemId);
+                    throw new IllegalArgumentException("Item no encontrado en el carrito");
+                }
+            }
+
+            logger.debug("Item encontrado: {}", item.toJson());
+
+            // Actualizar cantidad
+            UpdateResult result = mongoCrud.getCollection().updateOne(
+                Filters.eq("_id", item.getObjectId("_id")),
                 Updates.set("cantidad", nuevaCantidad)
             );
 
+            if (result.getModifiedCount() == 0) {
+                logger.error("No se pudo actualizar la cantidad para el item: {}", itemId);
+                throw new RuntimeException("No se pudo actualizar la cantidad");
+            }
+
+            logger.info("Cantidad actualizada con éxito: itemId={}, nuevaCantidad={}", itemId, nuevaCantidad);
         } catch (Exception e) {
+            logger.error("Error al actualizar cantidad: {}", e.getMessage(), e);
             throw new RuntimeException("Error al actualizar cantidad: " + e.getMessage());
         }
     }

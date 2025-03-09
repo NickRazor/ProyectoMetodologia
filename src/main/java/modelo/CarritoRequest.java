@@ -1,27 +1,28 @@
 package modelo;
 
 import lombok.Data;
+import org.bson.types.ObjectId;
 
 @Data
 public class CarritoRequest {
-    private String productoId;
+    private ObjectId productoId; // Cambiar a ObjectId
     private int cantidad;
 
     // Constructor por defecto necesario para Jackson
     public CarritoRequest() {}
 
-    // Constructor con parámetros
+    // Constructor con parámetros actualizado
     public CarritoRequest(String productoId, int cantidad) {
-        this.productoId = productoId;
+        this.productoId = new ObjectId(productoId);
         this.cantidad = cantidad;
     }
 
     // Getters y setters explícitos para asegurar la serialización correcta
-    public String getProductoId() {
+    public ObjectId getProductoId() {
         return productoId;
     }
 
-    public void setProductoId(String productoId) {
+    public void setProductoId(ObjectId productoId) {
         this.productoId = productoId;
     }
 

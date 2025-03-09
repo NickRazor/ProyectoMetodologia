@@ -2,19 +2,23 @@
 .upload-form-container {
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    align-items: flex-start; /* Cambiado de center para evitar centrado vertical */
+    padding: 20px;
+    min-height: calc(100vh - 60px); /* Ajustado para el header */
     background-color: #f9f9f9;
+    border-radius: 8px;
 }
 
 /* Estilos del formulario de subida */
 .upload-form {
     background-color: #fff;
-    padding: 20px 40px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 100px;
+    margin-left: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 500px;
+    max-width: 800px;
+    margin-top: 20px; /* Espacio adicional desde la parte superior */
 }
 
 .upload-form h2 {
@@ -86,8 +90,9 @@
     border: 1px solid #ddd;
     padding: 15px;
     border-radius: 5px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     background-color: #fff;
+    overflow: hidden;
 }
 
 .producto-img {
@@ -119,4 +124,33 @@
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 14px;
+}
+
+/* Ajustes para la vista previa */
+.preview-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.preview-image-container {
+    flex: 0 0 300px; /* Ancho fijo */
+}
+
+.preview-image-container img {
+    width: 100%;
+    height: 300px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.preview-info {
+    flex: 1;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
 }

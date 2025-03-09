@@ -2,18 +2,32 @@ package modelo;
 
 import org.bson.types.ObjectId;
 
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import lombok.Data;
+
+import java.io.IOException;
 
 @Data
 public class CarritoItem {
+    @JsonSerialize(using = ObjectIdSerializer.class)
     private ObjectId id;
+    
+    @JsonSerialize(using = ObjectIdSerializer.class)
     private ObjectId productoId;
+    
+    @JsonSerialize(using = ObjectIdSerializer.class)
     private ObjectId usuarioId;
+    
     private int cantidad;
     private double precioUnitario;
     private String titulo;
     private String imagenUrl;
-        // Constructor por defecto
+    
+    // Constructor por defecto
     public CarritoItem() {
         this.cantidad = 1;
         this.precioUnitario = 0.0;

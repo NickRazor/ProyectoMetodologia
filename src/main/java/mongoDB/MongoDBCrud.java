@@ -7,10 +7,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
-
 import modelo.Publicacion;
-
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,9 +25,11 @@ public class MongoDBCrud {
 
     @Autowired
     public MongoDBCrud(@Value("${spring.data.mongodb.uri}") String uri,
-                      @Value("${spring.data.mongodb.database}") String dbName) {
+                      @Value("${spring.data.mongodb.database}") String dbName,
+                      @Value("${spring.data.mongodb.collection}") String collectionName) {
         try {
             System.out.println("Intentando conectar a MongoDB...");
+            System.out.println("Colección a utilizar: " + collectionName);
             
             ConnectionString connectionString = new ConnectionString(uri);
             MongoClientSettings settings = MongoClientSettings.builder()
@@ -44,7 +43,7 @@ public class MongoDBCrud {
 
             this.mongoClient = MongoClients.create(settings);
             this.database = mongoClient.getDatabase(dbName);
-            this.collection = database.getCollection("publicaciones");
+            this.collection = database.getCollection(collectionName);
             
             database.runCommand(new Document("ping", 1));
             System.out.println("Conexión exitosa a MongoDB Atlas");

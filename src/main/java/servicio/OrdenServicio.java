@@ -6,6 +6,7 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.mongodb.client.model.Filters;
@@ -20,7 +21,7 @@ public class OrdenServicio {
     private final MongoDBCrud mongoCrud;
 
     @Autowired
-    public OrdenServicio(MongoDBCrud mongoCrud) {
+    public OrdenServicio(@Qualifier("ordenesMongoDBCrud") MongoDBCrud mongoCrud) {
         this.mongoCrud = mongoCrud;
     }
 

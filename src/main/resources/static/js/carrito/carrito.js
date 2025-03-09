@@ -61,9 +61,16 @@ class CarritoService {
         }
     }
 
+    static getCleanId(itemId) {
+        if (typeof itemId === 'object') {
+            return itemId.$oid || itemId.toString();
+        }
+        return itemId.toString();
+    }
+
     static async actualizarCantidad(itemId, nuevaCantidad) {
         try {
-            // Validación inicial
+            // Validaciones iniciales
             if (!itemId) {
                 throw new Error('ID de item no proporcionado');
             }
@@ -72,12 +79,31 @@ class CarritoService {
                 throw new Error('La cantidad debe ser al menos 1');
             }
 
+            // Procesar el ID del item de manera más robusta
+            let cleanItemId;
+            if (typeof itemId === 'object') {
+                if (itemId.$oid) {
+                    cleanItemId = itemId.$oid;
+                } else if (itemId.toString) {
+                    cleanItemId = itemId.toString();
+                }
+            } else {
+                cleanItemId = itemId.toString();
+            }
+
+            // Asegurarse de que el ID sea válido
+            cleanItemId = cleanItemId.trim();
+            if (!cleanItemId.match(/^[0-9a-fA-F]{24}$/)) {
+                throw new Error('ID de item inválido');
+            }
+
             console.log('Actualizando cantidad:', {
                 itemId: itemId,
+                cleanItemId: cleanItemId,
                 nuevaCantidad: nuevaCantidad
             });
 
-            const response = await fetch(`/api/carrito/actualizar/${itemId}`, {
+            const response = await fetch(`/api/carrito/actualizar/${cleanItemId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -89,52 +115,32 @@ class CarritoService {
                 })
             });
 
-            const responseText = await response.text();
-            console.log('Respuesta del servidor:', responseText);
+            // Manejar respuesta
+            const contentType = response.headers.get('content-type');
+            let resultado;
 
-            if (!response.ok) {
-                throw new Error(responseText || 'Error al actualizar cantidad');
-            }
-
-            // Forzar recarga de datos del carrito
-            const carrito = await this.obtenerCarrito();
-            console.log('Carrito actualizado:', carrito);
-
-            // Actualizar UI inmediatamente
-            const cantidadElement = document.querySelector(`[data-item-id="${itemId}"] .quantity-value`);
-            if (cantidadElement) {
-                cantidadElement.textContent = nuevaCantidad;
-            }
-
-            // Actualizar subtotal del item
-            const item = carrito.items.find(i => {
-                const itemIdFromCarrito = i.id?.$oid || i.id?.timestamp?.toString(16).padStart(24, '0') || i.id;
-                return itemIdFromCarrito === itemId;
-            });
-
-            if (item) {
-                const subtotal = item.precioUnitario * nuevaCantidad;
-                const subtotalElement = document.querySelector(`[data-item-id="${itemId}"] .subtotal`);
-                if (subtotalElement) {
-                    subtotalElement.textContent = `Subtotal (${nuevaCantidad} producto${nuevaCantidad > 1 ? 's' : ''}): US $ ${subtotal.toFixed(2)}`;
+            if (contentType && contentType.includes('application/json')) {
+                resultado = await response.json();
+            } else {
+                const text = await response.text();
+                if (!response.ok) {
+                    throw new Error(text || 'Error al actualizar cantidad');
                 }
-
-                // Actualizar subtotal general
-                let subtotalGeneral = carrito.items.reduce((sum, item) => {
-                    return sum + (item.precioUnitario * item.cantidad);
-                }, 0);
-                actualizarSubtotales(carrito.items.length, subtotalGeneral);
+                resultado = { mensaje: text };
             }
 
-            // Actualizar contador del carrito
-            await this.actualizarContadorCarrito();
+            // Actualizar UI si la operación fue exitosa
+            if (response.ok) {
+                const cantidadElement = document.querySelector(`[data-item-id="${cleanItemId}"] .quantity-value`);
+                if (cantidadElement) {
+                    cantidadElement.textContent = nuevaCantidad;
+                }
+                await this.renderizarCarrito();
+            }
 
-            return { mensaje: 'Cantidad actualizada con éxito' };
-
+            return resultado;
         } catch (error) {
             console.error('Error al actualizar cantidad:', error);
-            alert(`No se pudo actualizar la cantidad: ${error.message}`);
-            await this.renderizarCarrito(); // Recargar el carrito en caso de error
             throw error;
         }
     }
@@ -148,7 +154,10 @@ class CarritoService {
             const confirmar = confirm('¿Estás seguro de que deseas eliminar este producto del carrito?');
             if (!confirmar) return;
 
-            const response = await fetch(`/api/carrito/eliminar/${itemId}`, {
+            console.log('Intentando eliminar item:', itemId);
+
+            // Cambiar la URL para que coincida con el endpoint del controlador
+            const response = await fetch(`/api/carrito/${itemId}`, {
                 method: 'DELETE',
                 headers: {
                     'Accept': 'application/json'
@@ -156,18 +165,27 @@ class CarritoService {
                 credentials: 'include'
             });
 
+            const responseText = await response.text();
+            console.log('Respuesta del servidor:', responseText);
+
             if (!response.ok) {
-                throw new Error('Error al eliminar item');
+                throw new Error(responseText || 'Error al eliminar item');
+            }
+
+            // Eliminar el elemento del DOM
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (itemElement) {
+                itemElement.remove();
             }
 
             // Actualizar UI
             await this.renderizarCarrito();
             await this.actualizarContadorCarrito();
 
-            return await response.json();
+            return { mensaje: 'Item eliminado correctamente' };
         } catch (error) {
             console.error('Error al eliminar item:', error);
-            alert('No se pudo eliminar el producto');
+            alert(`No se pudo eliminar el producto: ${error.message}`);
             throw error;
         }
     }
@@ -277,21 +295,12 @@ class CarritoService {
                 
                 // Obtener el ID correcto del item
                 let itemId;
-                if (typeof item.id === 'object') {
-                    if (item.id.$oid) {
-                        // Formato MongoDB ObjectId
-                        itemId = item.id.$oid;
-                    } else if (item.id.timestamp) {
-                        // Formato con timestamp y date
-                        // Convertir el timestamp a un formato válido de 24 caracteres hexadecimales
-                        const timestamp = item.id.timestamp.toString(16);
-                        itemId = timestamp.padStart(24, '0'); // Asegurar que tenga 24 caracteres
-                    } else {
-                        console.error('Formato de ID no reconocido:', item.id);
-                        return '';
-                    }
-                } else if (typeof item.id === 'string') {
-                    // Si ya es un string
+                // Como objeto MongoDB
+                if (typeof item.id === 'object' && item.id.$oid) {
+                    itemId = item.id.$oid;
+                }
+                // Como string
+                else if (typeof item.id === 'string') {
                     itemId = item.id;
                 } else {
                     // Si el ID está en el campo productoId
