@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finalizar Compra - Happy Market</title>
+    <link rel="stylesheet" th:href="@{/css/user/factura.css}">
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo">
+          <img src="./img/Logo.png" alt="Happy Market Logo" />
+        </div>
+        <div class="page-title">
+          Finalizar compra (<span class="blue-text">n artículos</span>)
+        </div>
+      </div>
+
+      <div class="checkout-container">
+        <div class="address-form">
+          <input type="text" placeholder="Dirección" />
+          <input type="text" placeholder="Nombre completo" />
+          <input type="text" placeholder="Número de teléfono" />
+          <input type="text" placeholder="Ciudad" />
+          <input type="text" placeholder="Estado" />
+          <input type="text" placeholder="Código postal" />
+        </div>
+
+        <div class="order-summary">
+          <div class="summary-box">
+            <div class="btn-container">
+              <button class="btn-send" onclick="confirmarPedido()">Enviar a esta dirección</button>
+            </div>
+
+            <h3 class="summary-title">Confirmación del Pedido</h3>
+            <div id="items-container">
+              <!-- Items se cargarán aquí -->
+            </div>
+
+            <div class="summary-item">
+              <span>Impuestos (18%)</span>
+              <span id="impuestos">---</span>
+            </div>
+
+            <div class="summary-item total">
+              <span>Total del pedido</span>
+              <span id="total-pedido">---</span>
+            </div>
+          </div>
+
+          <div class="payment-box">
+            <h3 class="summary-title">Método de pago</h3>
+
+            <div class="payment-methods">
+              <img src="./img/metodosPago.jpg" alt="Métodos de pago" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const carritoData = JSON.parse(sessionStorage.getItem('carritoData') || '{}');
+        const itemsContainer = document.getElementById('items-container');
+        const spanTotal = document.getElementById('total-pedido');
+        const spanImpuestos = document.getElementById('impuestos');
+        
+        // Actualizar número de artículos en el título
+        document.querySelector('.blue-text').textContent = 
+          `${carritoData.cantidadItems || 0} artículos`;
+
+        // Mostrar items
+        if (carritoData.items && carritoData.items.length > 0) {
+          itemsContainer.innerHTML = carritoData.items.map(item => `
+            <div class="summary-item">
+              <span>${item.titulo} (${item.cantidad})</span>
+              <span>US $ ${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+            </div>
+          `).join('');
+
+          const subtotal = carritoData.total;
+          const impuestos = subtotal * 0.18;
+          const total = subtotal + impuestos;
+
+          spanImpuestos.textContent = `US $ ${impuestos.toFixed(2)}`;
+          spanTotal.textContent = `US $ ${total.toFixed(2)}`;
+        }
+      });
+
+      function confirmarPedido() {
+        // Validar formulario
+        const inputs = document.querySelectorAll('.address-form input');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+          if (!input.value.trim()) {
+            isValid = false;
+            input.style.borderColor = 'red';
+          }
+        });
+
+        if (!isValid) {
+          alert('Por favor, completa todos los campos');
+          return;
+        }
+
+        // Procesar pedido
+        alert('¡Pedido confirmado! Gracias por tu compra.');
+        sessionStorage.removeItem('carritoData');
+        window.location.href = '/';
+      }
+    </script>
+  </body>
+</html>

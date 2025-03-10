@@ -3,11 +3,13 @@ package controlador;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import exception.UnauthorizedException;
@@ -18,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import jakarta.servlet.http.HttpSession;
 import modelo.CarritoItem;
 import modelo.CarritoRequest;
+import modelo.Publicacion;
 import servicio.CarritoServicio;
 
 @RestController
@@ -27,6 +30,7 @@ public class CarritoController {
     
     @Autowired
     private CarritoServicio carritoServicio;
+
 
     // Método auxiliar para verificar autenticación
     private ObjectId verificarAutenticacion(HttpSession session) {
@@ -159,6 +163,37 @@ public class CarritoController {
             logger.error("Error al eliminar item del carrito: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error al eliminar del carrito: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/productos-relacionados")
+    public ResponseEntity<?> obtenerProductosRelacionados(HttpSession session) {
+        try {
+            ObjectId usuarioId = verificarAutenticacion(session);
+            List<Publicacion> productosRelacionados = carritoServicio.obtenerProductosRelacionados(usuarioId);
+            
+            List<Map<String, Object>> productosDTO = productosRelacionados.stream()
+                .map(producto -> {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", producto.getId());
+                    dto.put("titulo", producto.getTitulo());
+                    dto.put("precio", producto.getPrecio());
+                    // Convertir ObjectId a String para el imagenId
+                    if (producto.getImagenId() != null) {
+                        dto.put("imagenId", producto.getImagenId().toString());
+                    }
+                    dto.put("categoria", producto.getCategoria());
+                    
+                    logger.debug("Producto procesado: {}", dto); // Agregar log
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+            return ResponseEntity.ok(productosDTO);
+        } catch (Exception e) {
+            logger.error("Error al obtener productos relacionados: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("mensaje", "Error al obtener productos relacionados"));
         }
     }
 }

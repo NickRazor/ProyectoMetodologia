@@ -31,7 +31,7 @@ public class MongoConfig {
     private String databaseName;
 
     @Bean
-    public MongoClient mongoClient() {
+    MongoClient mongoClient() {
         try {
             logger.info("Intentando conectar a MongoDB...");
             
@@ -61,14 +61,14 @@ public class MongoConfig {
     }
 
     @Bean
-    public MongoDatabase mongoDatabase(MongoClient mongoClient) {
+    MongoDatabase mongoDatabase(MongoClient mongoClient) {
         return mongoClient.getDatabase(databaseName);
     }
 
     // Para el servicio de usuarios
     @Bean
     @Qualifier("usuariosMongoDBCrud")
-    public MongoDBCrud usuariosMongoDBCrud(
+    MongoDBCrud usuariosMongoDBCrud(
             @Value("${spring.data.mongodb.uri}") String uri,
             @Value("${spring.data.mongodb.database}") String dbName) {
         return new MongoDBCrud(uri, dbName, "usuarios");
@@ -76,25 +76,21 @@ public class MongoConfig {
 
     @Bean
     @Qualifier("publicacionesMongoDBCrud")
-    public MongoDBCrud publicacionesMongoDBCrud(
-            @Value("${spring.data.mongodb.uri}") String uri,
-            @Value("${spring.data.mongodb.database}") String dbName) {
+    public MongoDBCrud publicacionesMongoDBCrud(@Value("${spring.data.mongodb.uri}") String uri, @Value("${spring.data.mongodb.database}") String dbName) {
         return new MongoDBCrud(uri, dbName, "publicaciones");
     }
 
     @Bean
     @Primary
     @Qualifier("carritoMongoDBCrud")
-    public MongoDBCrud carritoMongoDBCrud(
-            @Value("${spring.data.mongodb.uri}") String uri,
-            @Value("${spring.data.mongodb.database}") String dbName) {
-        return new MongoDBCrud(uri, dbName, "carrito");
+    public MongoDBCrud carritoMongoDBCrud(MongoDatabase database) {
+        return new MongoDBCrud(connectionString, databaseName, "carrito");
     }
 
     // Para el servicio de órdenes
     @Bean
     @Qualifier("ordenesMongoDBCrud")
-    public MongoDBCrud ordenesMongoDBCrud(
+    MongoDBCrud ordenesMongoDBCrud(
             @Value("${spring.data.mongodb.uri}") String uri,
             @Value("${spring.data.mongodb.database}") String dbName) {
         logger.info("Creando bean ordenesMongoDBCrud para colección 'ordenes'");

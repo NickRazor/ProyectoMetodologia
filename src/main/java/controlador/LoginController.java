@@ -26,7 +26,7 @@ public class LoginController {
     public String mostrarLogin() {
         return "login";
     }
-
+    
     @PostMapping("/validar")
     public String validarUsuario(@RequestParam String email, 
                                 @RequestParam String password,

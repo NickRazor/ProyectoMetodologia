@@ -263,4 +263,53 @@ public class CarritoServicio {
             throw new RuntimeException("Error al limpiar el carrito: " + e.getMessage());
         }
     }
+
+    public List<Publicacion> obtenerProductosRelacionados(ObjectId usuarioId) {
+        try {
+            // 1. Obtener categorías de los productos en el carrito
+            List<String> categoriasEnCarrito = new ArrayList<>();
+            List<CarritoItem> itemsCarrito = obtenerCarrito(usuarioId);
+            
+            for (CarritoItem item : itemsCarrito) {
+                Publicacion publicacion = publicacionServicio.obtenerPublicacionPorId(item.getProductoId());
+                if (publicacion != null && !categoriasEnCarrito.contains(publicacion.getCategoria())) {
+                    categoriasEnCarrito.add(publicacion.getCategoria());
+                }
+            }
+
+            // 2. Si el carrito está vacío, obtener productos aleatorios
+            if (categoriasEnCarrito.isEmpty()) {
+                return publicacionServicio.obtenerPublicacionesRecientes(3);
+            }
+
+            // 3. Obtener un producto por cada categoría
+            List<Publicacion> productosRelacionados = new ArrayList<>();
+            
+            for (String categoria : categoriasEnCarrito) {
+                List<Publicacion> publicacionesCategoria = 
+                    publicacionServicio.obtenerPublicacionesRecientesPorCategoria(categoria, 1);
+                if (!publicacionesCategoria.isEmpty()) {
+                    productosRelacionados.add(publicacionesCategoria.get(0));
+                }
+                
+                // Si ya tenemos 3 productos, salimos
+                if (productosRelacionados.size() >= 3) {
+                    break;
+                }
+            }
+
+            // 4. Si no tenemos 3 productos, completar con productos aleatorios
+            if (productosRelacionados.size() < 3) {
+                List<Publicacion> productosAdicionales = 
+                    publicacionServicio.obtenerPublicacionesRecientes(3 - productosRelacionados.size());
+                productosRelacionados.addAll(productosAdicionales);
+            }
+
+            return productosRelacionados;
+
+        } catch (Exception e) {
+            logger.error("Error al obtener productos relacionados: ", e);
+            return new ArrayList<>();
+        }
+    }
 }

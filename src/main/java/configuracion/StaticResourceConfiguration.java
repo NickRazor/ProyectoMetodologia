@@ -14,4 +14,4 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
             .addResourceLocations("classpath:/static/img/")
             .setCachePeriod(3600); // Cache por 1 hora
     }
-}
+} 

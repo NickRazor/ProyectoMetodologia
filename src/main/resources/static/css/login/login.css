@@ -139,55 +139,140 @@ body {
     background-color: #db4437;
 }
 
+/* Estilos para el modal */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
-    left: 0;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow-y: auto;
+    display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 .modal-content {
-    background-color: white;
+    position: relative;
+    background-color: #fff;
+    width: 90%;
+    max-width: 500px; /* Reducido de 1000px */
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
     padding: 30px;
-    border-radius: 10px;
-    width: 600px;
-    color: black;
-    text-align: left;
+    animation: modalSlideIn 0.3s ease-out;
 }
 
-.modal img {
-    display: block;
-    margin: 0 auto 20px;
-    width: 150px;
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
-.modal input {
-    width: 100%;
-    padding: 15px;
-    margin: 15px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
+/* Estilos del formulario de registro */
+#registerForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
 }
 
-.modal button {
-    width: 100%;
-    padding: 15px;
-    background-color: #000;
-    color: #fff;
+#registerForm input[type="text"],
+#registerForm input[type="email"],
+#registerForm input[type="password"] {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 5px 0;
+}
+
+.checkbox-group label {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Botón de volver */
+.btn-back {
+    position: static;
+    background-color: transparent;
     border: none;
-    border-radius: 5px;
+    color: #666;
+    padding: 8px 12px;
     cursor: pointer;
-    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
 }
 
-    /* Ajustes para los checkboxes */
+.btn-back:hover {
+    color: #333;
+    background-color: var(--gray-100);
+    border-radius: 4px;
+}
+
+/* Logo en el modal */
+.modal-content img {
+    width: 150px;
+    height: auto;
+    margin: 0 auto 20px;
+    display: block;
+}
+
+/* Ajustes responsive */
+@media (max-height: 700px) {
+    .modal-content {
+        margin: 10px auto;
+        padding: 20px;
+    }
+
+    #registerForm {
+        gap: 10px;
+    }
+
+    .modal-content img {
+        width: 120px;
+    }
+}
+
+/* Ajustes para móviles */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 10px auto;
+    }
+}
+
+/* Ajustes para pantallas muy pequeñas */
+@media (max-height: 600px) {
+    .modal {
+        align-items: flex-start;
+    }
+    
+    .modal-content {
+        margin: 10px auto;
+    }
+}
+
+/* Ajustes para los checkboxes */
 .modal .checkbox-group {
     display: flex;
     align-items: center;
@@ -278,14 +363,15 @@ body {
 }
 
 .btn-primary {
+    flex: 1;
+    padding: 12px 20px;
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 10px 20px;
     border-radius: 5px;
+    font-size: 16px;
     cursor: pointer;
-    width: 100%;
-    margin-top: 15px;
+    transition: background-color 0.2s;
 }
 
 .btn-primary:hover {
@@ -304,4 +390,301 @@ body {
 
 .login-link a:hover {
     text-decoration: underline;
+}
+
+/* Modal header y botones */
+.modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 0 20px;
+    border-bottom: 1px solid var(--gray-100);
+    position: relative;
+}
+
+.modal-header h2 {
+    flex: 1;
+    text-align: center;
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+/* Formulario de registro */
+#registerForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Estilos para los modales */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Asegurarnos que el modal de registro esté oculto por defecto */
+#registerModal, #recoverPasswordModal {
+    display: none;
+}
+
+/* Estilos específicos para el modal de recuperación */
+#recoverPasswordModal .modal-content {
+    max-width: 400px; /* Más compacto que el modal de registro */
+    padding: 30px;
+}
+
+#recoverPasswordModal .modal-header {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+#recoverPasswordModal .modal-header h2 {
+    font-size: 22px;
+    color: #333;
+    margin: 0;
+}
+
+#recoverPasswordModal .form-group {
+    margin-bottom: 20px;
+}
+
+#recoverPasswordModal input[type="email"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+}
+
+#recoverPasswordModal input[type="email"]:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+#recoverPasswordModal .form-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+#recoverPasswordModal .btn-primary {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#recoverPasswordModal .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+#recoverPasswordModal .btn-back {
+    color: #666;
+    padding: 8px 15px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+#recoverPasswordModal .btn-back:hover {
+    color: #333;
+}
+
+/* Animación mejorada para el modal */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#recoverPasswordModal.modal.show {
+    display: flex;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+/* Estilos para el contenedor de contraseña */
+.password-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-container input {
+    padding-right: 40px; /* Espacio para el botón del ojo */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.toggle-password:hover {
+    color: #333;
+}
+
+/* Estilos para el indicador de fuerza */
+.password-strength {
+    margin-top: 5px;
+}
+
+.strength-bar {
+    height: 4px;
+    background-color: #eee;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.strength-bar::before {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 3px;
+    display: block;
+}
+
+/* Colores de fuerza de contraseña */
+.strength-weak .strength-bar::before {
+    width: 33%;
+    background-color: #ff4d4d;
+}
+
+.strength-medium .strength-bar::before {
+    width: 66%;
+    background-color: #ffd700;
+}
+
+.strength-strong .strength-bar::before {
+    width: 100%;
+    background-color: #00cc00;
+}
+
+/* Estilos para los inputs de contraseña */
+.password-container {
+    position: relative;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-container input[type="password"],
+.password-input-container input[type="text"] {
+    width: 100%;
+    padding: 15px;
+    padding-right: 45px;
+    border: 1px solid var(--gray-300);
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.password-input-container input[type="password"]:focus,
+.password-input-container input[type="text"]:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    transition: color 0.2s;
+}
+
+.toggle-password:hover {
+    color: #333;
+}
+
+/* Estilos para el indicador de fuerza */
+.password-strength {
+    margin-top: 8px;
+}
+
+.strength-bar {
+    height: 5px;
+    background-color: #eee;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.strength-text {
+    font-size: 13px;
+    color: #666;
+    display: block;
 }

@@ -322,10 +322,10 @@ class CarritoService {
                     <div class="flex flex-col md:flex-row gap-8 mb-6 border-b pb-6" data-item-id="${itemId}">
                         <div class="md:w-1/4">
                             <div class="rounded-lg overflow-hidden">
-                                <img src="${item.imagenUrl || '/img/placeholder.png'}" 
+                                <img src="${item.imagenUrl || '/img/placeholder/no-image.svg'}" 
                                      alt="${item.titulo || 'Producto'}"
                                      class="w-full h-auto object-cover"
-                                     onerror="this.onerror=null; this.src='/img/placeholder.png'"/>
+                                     onerror="this.onerror=null; this.src='/img/placeholder/no-image.svg'"/>
                             </div>
                         </div>
                         <div class="md:w-3/4">
@@ -381,6 +381,130 @@ class CarritoService {
             }
         }
     }
+
+    static getImagenId(producto) {
+        if (!producto) {
+            console.warn('Producto es null o undefined');
+            return null;
+        }
+        
+        console.log('Procesando producto:', producto); // Debug
+    
+        // Si imagenId es un string directo
+        if (typeof producto.imagenId === 'string') {
+            return producto.imagenId;
+        }
+    
+        // Si es un objeto MongoDB con $oid
+        if (producto.imagenId && producto.imagenId.$oid) {
+            return producto.imagenId.$oid;
+        }
+    
+        console.warn('No se pudo obtener imagenId de:', producto);
+        return null;
+    }
+
+    static async cargarProductosRelacionados() {
+        try {
+            const response = await fetch('/api/carrito/productos-relacionados', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al obtener productos relacionados');
+            }
+
+            const productos = await response.json();
+            console.log('Productos relacionados recibidos:', productos); // Debug
+            
+            const contenedor = document.querySelector('.space-y-4');
+            
+            if (contenedor && productos && productos.length > 0) {
+                contenedor.innerHTML = productos.map(producto => {
+                    const imagenId = this.getImagenId(producto);
+                    console.log('ID de imagen procesado:', imagenId); // Debug
+                    
+                    const imagenUrl = imagenId ? 
+                        `/api/imagen/${imagenId}` : 
+                        '/img/placeholder/no-image.svg';
+                    
+                    // Obtener el ID del producto de forma segura
+                    const productoId = producto.id?.$oid || producto.id || producto._id?.$oid || producto._id;
+                    
+                    if (!productoId) {
+                        console.warn('No se pudo obtener ID del producto:', producto);
+                        return '';
+                    }
+
+                    return `
+                        <div class="product-card">
+                            <div class="flex items-center">
+                                <div class="w-16 h-16 mr-4">
+                                    <img src="${imagenUrl}" 
+                                         alt="${producto.titulo}" 
+                                         class="w-full h-full object-cover rounded"
+                                         onerror="this.onerror=null; this.src='/img/placeholder/no-image.svg'"/>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-medium mb-1">${producto.titulo}</h4>
+                                    <p class="text-xs text-gray-600 mb-1">US $ ${producto.precio.toFixed(2)}</p>
+                                    <button class="text-xs btn-blue py-1 px-3"
+                                            onclick="CarritoService.agregarAlCarrito('${productoId}', 1)">
+                                        Añadir al carrito
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).filter(Boolean).join('');
+            } else {
+                contenedor.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-gray-500">No hay productos relacionados disponibles</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error al cargar productos relacionados:', error);
+            const contenedor = document.querySelector('.space-y-4');
+            if (contenedor) {
+                contenedor.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-red-500">Error al cargar productos relacionados</p>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Agregar al final de la clase CarritoService
+    static async procederPago() {
+        try {
+            const carrito = await this.obtenerCarrito();
+            
+            if (!carrito || !carrito.items || carrito.items.length === 0) {
+                alert('Tu carrito está vacío');
+                return;
+            }
+
+            // Guardar datos del carrito en sessionStorage para la página de factura
+            sessionStorage.setItem('carritoData', JSON.stringify({
+                items: carrito.items,
+                total: carrito.items.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0),
+                cantidadItems: carrito.items.length
+            }));
+
+            // Redirigir a la página de factura
+            window.location.href = '/factura';
+        } catch (error) {
+            console.error('Error al proceder al pago:', error);
+            alert('Error al proceder al pago. Por favor, intenta de nuevo.');
+        }
+    }
 }
 
 // Inicializar contador al cargar la página
@@ -391,6 +515,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Hacer la clase disponible globalmente
 window.CarritoService = CarritoService;
+
+// Agregar fuera de la clase
+window.procederPago = () => CarritoService.procederPago();
 
 // Función para actualizar los subtotales
 function actualizarSubtotales(cantidadItems, subtotal) {
@@ -412,5 +539,6 @@ function actualizarSubtotales(cantidadItems, subtotal) {
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('/carrito')) {
         CarritoService.renderizarCarrito();
+        CarritoService.cargarProductosRelacionados();
     }
 });

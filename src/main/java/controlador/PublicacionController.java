@@ -8,18 +8,26 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import modelo.Publicacion;
 import servicio.PublicacionServicio;
 import jakarta.servlet.http.HttpSession;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Controller
-@RequestMapping("/api")
+@RestController
+@RequestMapping("/api/publicaciones")
 public class PublicacionController {
 
     private final PublicacionServicio publicacionServicio;
+    private static final Logger logger = LoggerFactory.getLogger(PublicacionController.class);
 
-
+    @Autowired
     public PublicacionController(PublicacionServicio publicacionServicio) {
         this.publicacionServicio = publicacionServicio;
     }
@@ -79,17 +87,7 @@ public class PublicacionController {
         return "error";
     }
 
-    @GetMapping("/publicaciones")
-    @ResponseBody
-    public List<Publicacion> obtenerPublicaciones() {
-        List<Publicacion> publicaciones = publicacionServicio.obtenerPublicaciones();
-        System.out.println("Publicaciones encontradas: " + publicaciones.size());
-        // Añadir logging para verificar las categorías
-        publicaciones.forEach(p -> {
-            System.out.println("Publicación ID: " + p.getId() + ", Categoría: " + p.getCategoria());
-        });
-        return publicaciones;
-    }
+  
 
     // Añadir método para obtener publicaciones por usuario
     @GetMapping("/mis-publicaciones")
@@ -208,6 +206,117 @@ public class PublicacionController {
             redirectAttributes.addFlashAttribute("mensaje", "Error: " + e.getMessage());
             redirectAttributes.addFlashAttribute("tipoMensaje", "error");
             return "redirect:/user/mis-publicaciones";
+        }
+    }
+
+
+    @PostMapping("/{id}/rating/{tipo}")
+    public ResponseEntity<?> actualizarRating(
+            @PathVariable("id") String id,
+            @PathVariable("tipo") String tipo,
+            HttpSession session) {
+        try {
+            logger.debug("Recibiendo request para rating - ID: {}, Tipo: {}", id, tipo);
+
+            // Verificar autenticación
+            Object usuarioIdObj = session.getAttribute("usuarioId");
+            if (usuarioIdObj == null) {
+                logger.warn("Intento de rating sin autenticación");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("mensaje", "Debe iniciar sesión"));
+            }
+
+            ObjectId publicacionId = new ObjectId(id);
+            boolean actualizado = publicacionServicio.actualizarRating(publicacionId, tipo);
+
+            if (actualizado) {
+                Publicacion pub = publicacionServicio.obtenerPublicacionPorId(publicacionId);
+                Map<String, Object> response = new HashMap<>();
+                response.put("likes", pub.getRatingLikes());
+                response.put("dislikes", pub.getRatingDislikes());
+                response.put("mensaje", "Rating actualizado exitosamente");
+                
+                logger.debug("Rating actualizado - ID: {}, Likes: {}, Dislikes: {}", 
+                    id, pub.getRatingLikes(), pub.getRatingDislikes());
+                
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "Error al actualizar rating"));
+            }
+
+        } catch (IllegalArgumentException e) {
+            logger.error("ID de publicación inválido: {}", id, e);
+            return ResponseEntity.badRequest()
+                .body(Map.of("mensaje", "ID de publicación inválido"));
+        } catch (Exception e) {
+            logger.error("Error al procesar rating: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("mensaje", "Error al procesar la solicitud"));
+        }
+    }
+
+    @GetMapping("/destacados")
+    public ResponseEntity<?> obtenerDestacados(
+            @RequestParam(defaultValue = "6") int limite) {
+        try {
+            logger.debug("Obteniendo {} publicaciones destacadas", limite);
+            List<Publicacion> destacados = publicacionServicio.obtenerPublicacionesDestacadas(limite);
+            
+            // Convertir a DTO para asegurar el formato correcto
+            List<Map<String, Object>> dtos = destacados.stream()
+                .map(pub -> {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", pub.getId());
+                    dto.put("idAsString", pub.getId().toString());
+                    dto.put("titulo", pub.getTitulo());
+                    dto.put("descripcion", pub.getDescripcion());
+                    dto.put("precio", pub.getPrecio());
+                    dto.put("categoria", pub.getCategoria());
+                    dto.put("fecha", pub.getFecha());
+                    dto.put("imagenIdAsString", pub.getImagenId().toString());
+                    dto.put("ratingLikes", pub.getRatingLikes());
+                    dto.put("ratingDislikes", pub.getRatingDislikes());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+            return ResponseEntity.ok(dtos);
+        } catch (Exception e) {
+            logger.error("Error al obtener publicaciones destacadas: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("mensaje", "Error al obtener productos destacados"));
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> obtenerPublicaciones() {
+        try {
+            List<Publicacion> publicaciones = publicacionServicio.obtenerPublicaciones();
+            
+            // Convertir a DTO para asegurar el formato correcto
+            List<Map<String, Object>> dtos = publicaciones.stream()
+                .map(pub -> {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", pub.getId().toString());
+                    dto.put("idAsString", pub.getId().toString());
+                    dto.put("titulo", pub.getTitulo());
+                    dto.put("descripcion", pub.getDescripcion());
+                    dto.put("precio", pub.getPrecio());
+                    dto.put("categoria", pub.getCategoria());
+                    dto.put("fecha", pub.getFecha());
+                    dto.put("imagenIdAsString", pub.getImagenId().toString());
+                    dto.put("ratingLikes", pub.getRatingLikes());
+                    dto.put("ratingDislikes", pub.getRatingDislikes());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+            return ResponseEntity.ok(dtos);
+        } catch (Exception e) {
+            logger.error("Error al obtener publicaciones: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("mensaje", "Error al obtener las publicaciones"));
         }
     }
 }

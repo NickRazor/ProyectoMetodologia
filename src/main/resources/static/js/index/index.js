@@ -6,11 +6,29 @@ function createProductCard(product) {
     const imageContainer = document.createElement('div');
     imageContainer.classList.add('product-image');
     const img = document.createElement('img');
-    img.src = `/api/imagen/${product.imagenIdAsString}`;
+    
+    // Obtener el ID de imagen correcto
+    const imagenId = product.imagenIdAsString || 
+                    (product.imagenId && product.imagenId.$oid) || 
+                    product.imagenId;
+
+    if (imagenId) {
+        img.src = `/api/imagen/${imagenId}`;
+        console.log('URL de imagen:', img.src); // Debug
+    } else {
+        img.src = '/img/placeholder/no-image.svg';
+        console.warn('No se encontró ID de imagen para:', product);
+    }
+
     img.alt = product.titulo;
     img.onerror = () => {
-        img.src = '/img/placeholder.jpg';
+        console.warn('Error al cargar imagen:', img.src);
+        img.src = '/img/placeholder/no-image.svg';
     };
+
+    // Agregar clases para el tamaño
+    img.classList.add('w-full', 'h-full', 'object-cover');
+    
     imageContainer.appendChild(img);
     card.appendChild(imageContainer);
 
@@ -53,13 +71,112 @@ function createProductCard(product) {
     date.textContent = `Publicado: ${fecha.toLocaleDateString()}`;
     infoContainer.appendChild(date);
 
-    // Rating
+    // Función para obtener el ID correcto del producto
+    function getProductId(product) {
+        console.log('Procesando producto para ID:', product); // Debug
+
+        // Si tenemos idAsString, usarlo directamente
+        if (product.idAsString) {
+            return product.idAsString;
+        }
+
+        // Si es un string directo
+        if (typeof product.id === 'string') {
+            return product.id;
+        }
+
+        // Si es un ObjectId de MongoDB
+        if (product.id && product.id.$oid) {
+            return product.id.$oid;
+        }
+
+        // Si tenemos _id
+        if (product._id) {
+            if (typeof product._id === 'string') {
+                return product._id;
+            }
+            if (product._id.$oid) {
+                return product._id.$oid;
+            }
+        }
+
+        // Si tenemos id como objeto
+        if (typeof product.id === 'object') {
+            return product.id.toString();
+        }
+
+        console.warn('No se pudo obtener ID del producto:', product);
+        return null;
+    }
+
+    // Rating con botones interactivos
     const rating = document.createElement('div');
     rating.classList.add('product-rating');
-    rating.innerHTML = `
-        <span class="likes"><i class="fas fa-thumbs-up"></i> ${product.ratingLikes || 0}</span>
-        <span class="dislikes"><i class="fas fa-thumbs-down"></i> ${product.ratingDislikes || 0}</span>
-    `;
+    
+    const likeBtn = document.createElement('button');
+    likeBtn.classList.add('rating-btn', 'likes');
+    likeBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> <span>${product.ratingLikes || 0}</span>`;
+    
+    const dislikeBtn = document.createElement('button');
+    dislikeBtn.classList.add('rating-btn', 'dislikes');
+    dislikeBtn.innerHTML = `<i class="fas fa-thumbs-down"></i> <span>${product.ratingDislikes || 0}</span>`;
+
+    // Función para manejar el rating
+    async function handleRating(tipo) {
+        try {
+            const productoId = getProductId(product);
+            
+            if (!productoId) {
+                throw new Error('ID de producto no válido');
+            }
+
+            console.log('Enviando rating para producto:', productoId); // Debug
+
+            // Corregir la ruta del endpoint
+            const response = await fetch(`/api/publicaciones/${productoId}/rating/${tipo}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            console.log('Respuesta:', response.status); // Debug
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    alert('Debes iniciar sesión para calificar productos');
+                    window.location.href = '/auth/login';
+                    return;
+                }
+                const errorData = await response.json();
+                throw new Error(errorData.mensaje || `Error en la respuesta: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Respuesta del servidor:', data); // Debug
+            
+            // Actualizar UI
+            likeBtn.querySelector('span').textContent = data.likes;
+            dislikeBtn.querySelector('span').textContent = data.dislikes;
+            
+            // Efectos visuales
+            const btn = tipo === 'like' ? likeBtn : dislikeBtn;
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 200);
+            
+        } catch (error) {
+            console.error('Error detallado:', error);
+            alert('Error al actualizar la calificación: ' + error.message);
+        }
+    }
+
+    likeBtn.addEventListener('click', () => handleRating('like'));
+    dislikeBtn.addEventListener('click', () => handleRating('dislike'));
+
+    rating.appendChild(likeBtn);
+    rating.appendChild(dislikeBtn);
     infoContainer.appendChild(rating);
 
     card.appendChild(infoContainer);
@@ -129,42 +246,52 @@ function createProductCard(product) {
     return card;
 }
 
-function renderProducts(data, container) {
-    container.innerHTML = '';
-    data.forEach(publicacion => {
-        console.log('Creando tarjeta para:', publicacion); // Debug
-        const card = createProductCard(publicacion);
-        console.log('Tarjeta creada:', card); // Debug
-        container.appendChild(card);
-    });
-}
 
-function loadProducts(containerId) {
-    const container = document.getElementById(containerId);
-    console.log('Iniciando carga de productos...');
+async function loadFeaturedProducts() {
+    const container = document.getElementById('featuredProductsContainer');
+    console.log('Cargando productos destacados...');
     
-    fetch('/api/publicaciones')
-        .then(response => {
-            console.log('Estado de la respuesta:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Datos recibidos:', data);
-            if (!data || data.length === 0) {
-                container.innerHTML = '<p>No hay productos disponibles</p>';
-                return;
-            }
-            renderProducts(data, container);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            container.innerHTML = '<p>Error al cargar los productos</p>';
+    try {
+        const response = await fetch('/api/publicaciones/destacados?limite=6');
+        console.log('Estado de respuesta destacados:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Productos destacados recibidos:', data);
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500">No hay productos destacados disponibles</p>';
+            return;
+        }
+
+        // Ordenar por número de likes
+        data.sort((a, b) => (b.ratingLikes || 0) - (a.ratingLikes || 0));
+        
+        // Renderizar con un indicador de "Destacado"
+        container.innerHTML = '';
+        data.forEach(publicacion => {
+            const card = createProductCard(publicacion);
+            
+            // Agregar badge de destacado
+            const badge = document.createElement('div');
+            badge.classList.add('featured-badge');
+            badge.innerHTML = `
+                <i class="fas fa-star"></i>
+                <span>${publicacion.ratingLikes || 0} likes</span>
+            `;
+            card.querySelector('.product-info').prepend(badge);
+            
+            container.appendChild(card);
         });
+    } catch (error) {
+        console.error('Error al cargar destacados:', error);
+        container.innerHTML = '<p class="text-center text-red-500">Error al cargar los productos destacados</p>';
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    loadProducts("products-container");
+    loadFeaturedProducts(); // Cargar productos destacados
 });

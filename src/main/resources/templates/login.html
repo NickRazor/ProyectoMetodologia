@@ -49,19 +49,40 @@
 <!-- Modal de registro -->
 <div id="registerModal" class="modal">
     <div class="modal-content">
-        <!-- Botón para volver al inicio -->
-        <button id="back-to-login" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Volver
-        </button>
+        <div class="modal-header">
+            <button id="back-to-login" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <h2>Crear Cuenta</h2>
+        </div>
 
-        <h2>Crear Cuenta</h2>
         <img th:src="@{/img/index/logohm.jpg}" alt="Happy Market">
         
         <form th:action="@{/auth/registrar}" method="post" id="registerForm">
             <input type="text" name="nombre" placeholder="Nombre Completo" required>
             <input type="email" name="email" placeholder="Dirección de Correo" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
-            <input type="password" name="confirmarPassword" placeholder="Repetir Contraseña" required>
+            
+            <div class="password-container">
+                <div class="password-input-container">
+                    <input type="password" name="password" id="password" placeholder="Contraseña" required>
+                    <button type="button" class="toggle-password">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="password-strength">
+                    <div class="strength-bar"></div>
+                    <span class="strength-text">Fuerza de la contraseña</span>
+                </div>
+            </div>
+
+            <div class="password-container">
+                <div class="password-input-container">
+                    <input type="password" name="confirmarPassword" id="confirmarPassword" placeholder="Repetir Contraseña" required>
+                    <button type="button" class="toggle-password">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
             
             <div class="checkbox-group">
                 <input type="checkbox" id="terms" required>
@@ -71,26 +92,35 @@
                 <input type="checkbox" id="notifications" name="aceptaNotificaciones">
                 <label for="notifications">Deseo recibir notificaciones de productos nuevos</label>
             </div>
-            <button type="submit" class="btn-primary">Crear Cuenta</button>
+            
+            <div class="form-buttons">
+                <button type="submit" class="btn-primary">Crear Cuenta</button>
+            </div>
         </form>
-
-        <!-- Enlace para iniciar sesión si ya tienes cuenta -->
-        <p class="login-link">¿Ya tienes cuenta? <a href="#" id="login-link">Iniciar sesión</a></p>
     </div>
 </div>
 
 <!-- Modal de Recuperar Contraseña -->
-<div id="recoverPasswordModal" class="modal" style="display: none;">
-  <div class="modal-content">
-      <h2>Recuperar Contraseña</h2>
-      <input type="email" placeholder="Correo electrónico o número de teléfono" required>
-      <button>Enviar enlace de recuperación</button>
-      
-      <p style="text-align: center; margin-top: 20px;">
-          <!-- Enlace de redirección al login -->
-          <a href="login.html" id="back-to-login" style="color: #007bff; text-decoration: none;">Volver al inicio de sesión</a>
-      </p>
-  </div>
+<div id="recoverPasswordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button id="back-to-login" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <h2>Recuperar Contraseña</h2>
+        </div>
+        
+        <form th:action="@{/auth/recuperar}" method="post">
+            <div class="form-group">
+                <input type="email" name="email" placeholder="Correo electrónico" required>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn-primary">
+                    Enviar enlace de recuperación
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
     <!-- Scripts -->
