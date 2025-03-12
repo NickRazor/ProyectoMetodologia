@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finalizar Compra - Happy Market</title>
+    <link rel="stylesheet" th:href="@{/css/user/factura.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img th:src="@{/img/Logo.png}" alt="Happy Market Logo" />
+            </div>
+            <div class="page-title">
+                Finalizar compra (<span class="blue-text" id="item-count">0 artículos</span>)
+            </div>
+        </div>
+
+        <div class="checkout-container">
+            <div class="address-form">
+                <h3>Datos de envío</h3>
+                <div class="form-group">
+                    <label for="direccion">Dirección completa*</label>
+                    <input type="text" id="direccion" placeholder="Calle, número, piso, etc." required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre completo*</label>
+                    <input type="text" id="nombre" placeholder="Nombre y apellidos" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="telefono">Número de teléfono*</label>
+                    <input type="tel" id="telefono" placeholder="Ej. +51 999 888 777" required />
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="ciudad">Ciudad*</label>
+                        <input type="text" id="ciudad" placeholder="Ej. Lima" required />
+                    </div>
+                    
+                    <div class="form-group half">
+                        <label for="estado">Estado/Provincia*</label>
+                        <input type="text" id="estado" placeholder="Ej. Lima" required />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cp">Código postal*</label>
+                    <input type="text" id="cp" placeholder="Ej. 15001" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Correo electrónico*</label>
+                    <input type="email" id="email" placeholder="ejemplo@correo.com" required />
+                </div>
+                
+                <div class="form-group checkbox">
+                    <input type="checkbox" id="guardar-direccion" />
+                    <label for="guardar-direccion">Guardar esta dirección para futuras compras</label>
+                </div>
+            </div>
+
+            <div class="order-summary">
+                <div class="summary-box">
+                    <div class="btn-container">
+                        <button class="btn-send" onclick="procesarCompra()">
+                            <i class="fas fa-shipping-fast"></i> Procesar compra
+                        </button>
+                    </div>
+
+                    <h3 class="summary-title">Resumen del pedido</h3>
+                    <div id="items-container">
+                        <!-- Los items se cargarán dinámicamente -->
+                        <p class="text-center">Cargando productos...</p>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">US$ 0.00</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Impuestos (18%):</span>
+                        <span id="impuestos">US$ 0.00</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Envío:</span>
+                        <span id="envio">US$ 5.00</span>
+                    </div>
+
+                    <div class="summary-item total">
+                        <span>Total del pedido:</span>
+                        <span id="total-pedido">US$ 0.00</span>
+                    </div>
+                </div>
+
+                <div class="payment-box">
+                    <h3 class="summary-title">Método de pago</h3>
+                    <div class="payment-methods">
+                        <div class="payment-option selected">
+                            <input type="radio" name="payment" id="card" checked />
+                            <label for="card">
+                                <i class="fas fa-credit-card"></i> Tarjeta de crédito/débito
+                            </label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" name="payment" id="paypal" />
+                            <label for="paypal">
+                                <i class="fab fa-paypal"></i> PayPal
+                            </label>
+                        </div>
+                    </div>
+                    <div class="secured-payment">
+                        <i class="fas fa-lock"></i> Pago seguro con cifrado SSL
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/carrito/carrito.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Primero intentar usar datos del sessionStorage que fueron guardados en procederPago()
+                const carritoDataStr = sessionStorage.getItem('carritoData');
+                
+                if (carritoDataStr) {
+                    // Si hay datos en sessionStorage, usarlos
+                    const carritoData = JSON.parse(carritoDataStr);
+                    console.log('Usando datos del carrito desde sessionStorage:', carritoData);
+                    mostrarDatosCheckout(carritoData);
+                    return;
+                }
+                
+                // Si no hay datos en sessionStorage, mostrar mensaje de carrito vacío
+                console.warn('No hay datos en sessionStorage');
+                mostrarCarritoVacio();
+            } catch (error) {
+                console.error('Error al cargar datos para checkout:', error);
+                mostrarError('Error al cargar los datos del checkout. Por favor, inténtelo de nuevo más tarde.');
+            }
+        });
+
+        // Función para mostrar los datos del checkout
+        function mostrarDatosCheckout(carrito) {
+            // Actualizar contador de items
+            document.getElementById('item-count').textContent = 
+                `${carrito.items.length} artículo${carrito.items.length !== 1 ? 's' : ''}`;
+            
+            // Mostrar items en el resumen
+            const itemsContainer = document.getElementById('items-container');
+            let subtotal = 0;
+            
+            itemsContainer.innerHTML = carrito.items.map(item => {
+                const precio = parseFloat(item.precioUnitario) || 0;
+                const cantidad = parseInt(item.cantidad) || 0;
+                const totalItem = precio * cantidad;
+                subtotal += totalItem;
+                
+                return `
+                    <div class="summary-item">
+                        <span>${item.titulo} (${cantidad})</span>
+                        <span>US$ ${totalItem.toFixed(2)}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            // Calcular y mostrar totales
+            const impuestos = subtotal * 0.18;
+            const envio = 5.00;
+            const total = subtotal + impuestos + envio;
+            
+            document.getElementById('subtotal').textContent = `US$ ${subtotal.toFixed(2)}`;
+            document.getElementById('impuestos').textContent = `US$ ${impuestos.toFixed(2)}`;
+            document.getElementById('envio').textContent = `US$ ${envio.toFixed(2)}`;
+            document.getElementById('total-pedido').textContent = `US$ ${total.toFixed(2)}`;
+        }
+
+        // Función para mostrar mensaje de carrito vacío
+        function mostrarCarritoVacio() {
+            const container = document.querySelector('.checkout-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-shopping-cart text-gray-400 text-5xl mb-4"></i>
+                        <p class="text-gray-500">Tu carrito está vacío</p>
+                        <a href="/" class="btn-blue inline-block mt-4">Ir a comprar</a>
+                    </div>
+                `;
+            }
+        }
+
+        // Función para mostrar mensajes de error
+        function mostrarError(mensaje) {
+            const container = document.querySelector('.checkout-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+                        <p class="text-red-500">${mensaje}</p>
+                        <a href="/" class="btn-blue inline-block mt-4">Volver al inicio</a>
+                    </div>
+                `;
+            }
+        }
+        
+        function validarFormulario() {
+            const campos = [
+                'direccion', 'nombre', 'telefono', 
+                'ciudad', 'estado', 'cp', 'email'
+            ];
+            
+            let valido = true;
+            
+            campos.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                if (!elemento.value.trim()) {
+                    elemento.classList.add('error');
+                    valido = false;
+                } else {
+                    elemento.classList.remove('error');
+                }
+            });
+            
+            return valido;
+        }
+        
+        async function procesarCompra() {
+            if (!validarFormulario()) {
+                alert('Por favor, completa todos los campos obligatorios marcados con *');
+                return;
+            }
+            
+            try {
+                // Recopilar datos del cliente
+                const clienteData = {
+                    nombre: document.getElementById('nombre').value,
+                    direccion: document.getElementById('direccion').value,
+                    telefono: document.getElementById('telefono').value,
+                    ciudad: document.getElementById('ciudad').value,
+                    estado: document.getElementById('estado').value,
+                    cp: document.getElementById('cp').value,
+                    email: document.getElementById('email').value,
+                    guardaDireccion: document.getElementById('guardar-direccion').checked
+                };
+                
+                // Guardar datos del cliente para la factura
+                sessionStorage.setItem('clienteData', JSON.stringify(clienteData));
+                
+                // CAMBIO IMPORTANTE: Usar los datos del sessionStorage en lugar de intentar
+                // obtener el carrito del servidor que ya fue limpiado
+                const carritoDataStr = sessionStorage.getItem('carritoData');
+                
+                if (!carritoDataStr) {
+                    alert('No se encontraron datos del carrito en sessionStorage');
+                    return;
+                }
+                
+                const carritoData = JSON.parse(carritoDataStr);
+                
+                // Verificar si hay items en el carrito
+                if (!carritoData.items || carritoData.items.length === 0) {
+                    alert('Tu carrito está vacío. No se puede procesar la compra.');
+                    return;
+                }
+                
+                // Actualizar los datos de la factura con la información más reciente
+                const facturaData = {
+                    items: carritoData.items,
+                    total: carritoData.total,
+                    cantidadItems: carritoData.cantidadItems,
+                    fechaPago: new Date().toISOString(),
+                    facturaId: generarFacturaId(),
+                    clienteData: clienteData
+                };
+                
+                // Guardar los datos de factura
+                sessionStorage.setItem('facturaData', JSON.stringify(facturaData));
+                
+                // Ya no es necesario limpiar el carrito nuevamente, se hizo en procederPago()
+                
+                // Mostrar indicador de carga
+                document.querySelector('.btn-send').innerHTML = 
+                    '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                
+                // Redirigir a la página de factura después de un breve retraso
+                setTimeout(() => {
+                    window.location.href = '/factura';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error al procesar la compra:', error);
+                alert('Error al procesar la compra. Por favor, inténtalo de nuevo.');
+            }
+        }
+        
+        function generarFacturaId() {
+            const prefijo = 'HM';
+            const timestamp = new Date().getTime().toString().slice(-6);
+            const aleatorio = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            return `${prefijo}${timestamp}-${aleatorio}`;
+        }
+    </script>
+
+    <style>
+        /* Estilos adicionales para checkout.html */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .form-group.checkbox {
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-group.checkbox input {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-group.half {
+            width: 50%;
+        }
+        
+        .error {
+            border-color: red !important;
+        }
+        
+        .payment-option {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .payment-option input {
+            margin-right: 10px;
+        }
+        
+        .secured-payment {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>

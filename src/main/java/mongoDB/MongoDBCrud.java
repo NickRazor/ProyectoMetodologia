@@ -12,7 +12,8 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class MongoDBCrud {
     private final MongoClient mongoClient;
     private final MongoDatabase database;
     private final MongoCollection<Document> collection;
+    private Logger logger = LoggerFactory.getLogger(MongoDBCrud.class);
     public MongoDBCrud(@Value("${spring.data.mongodb.uri}") String uri,
                       @Value("${spring.data.mongodb.database}") String dbName,
                       @Value("${spring.data.mongodb.collection}") String collectionName) {
@@ -77,8 +79,51 @@ public class MongoDBCrud {
     }
 
     // Actualizar un documento por ID
-    public void update(ObjectId id, Document updatedDocument) {
-        collection.updateOne(Filters.eq("_id", id), new Document("$set", updatedDocument));
+    /**
+     * Actualiza un documento en la colección de MongoDB
+     * 
+     * @param id ID del documento a actualizar
+     * @param update Documento con los campos a actualizar
+     */
+    public void update(ObjectId id, Document update) {
+        try {
+            // Si el documento de actualización ya contiene operadores como $set, lo usamos directamente
+            if (update.keySet().stream().anyMatch(key -> key.startsWith("$"))) {
+                collection.updateOne(
+                    Filters.eq("_id", id),
+                    update
+                );
+            } else {
+                // De lo contrario, envolvemos los campos en un operador $set
+                collection.updateOne(
+                    Filters.eq("_id", id),
+                    new Document("$set", update)
+                );
+            }
+            logger.info("Documento actualizado con ID: {}", id.toString());
+        } catch (Exception e) {
+            logger.error("Error al actualizar documento: {}", e.getMessage());
+            throw e;  // Re-lanzar la excepción para manejarla en niveles superiores
+        }
+    }
+
+    /**
+     * Actualiza documentos que coincidan con un filtro específico
+     * 
+     * @param filter Filtro para los documentos a actualizar
+     * @param update Operaciones de actualización a aplicar
+     */
+    public void updateWithFilter(Document filter, Document update) {
+        try {
+            logger.info("Actualizando documentos con filtro: {}", filter.toJson());
+            logger.debug("Update: {}", update.toJson());
+            
+            collection.updateOne(filter, update);
+            logger.info("Actualización completada");
+        } catch (Exception e) {
+            logger.error("Error al actualizar documento con filtro: ", e);
+            throw e;
+        }
     }
 
     // Borrar un documento por ID
@@ -306,5 +351,12 @@ public class MongoDBCrud {
             e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
+    public MongoCollection<Document> setCollection(String collectionName) {
+        return database.getCollection(collectionName);
     }
 }

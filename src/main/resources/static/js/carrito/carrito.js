@@ -172,14 +172,42 @@ class CarritoService {
                 throw new Error(responseText || 'Error al eliminar item');
             }
 
-            // Eliminar el elemento del DOM
+            // Intentar parsear la respuesta como JSON
+            let responseData;
+            try {
+                responseData = JSON.parse(responseText);
+            } catch (e) {
+                console.warn('La respuesta no es JSON válido', e);
+                // Continuar con el proceso de eliminación aunque no podamos parsear la respuesta
+            }
+
+            // Eliminar el elemento del DOM 
             const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
             if (itemElement) {
                 itemElement.remove();
             }
 
-            // Actualizar UI
-            await this.renderizarCarrito();
+            // Actualizar UI usando la respuesta del servidor o recargando
+            if (responseData && Array.isArray(responseData.items)) {
+                // Verificar si el item eliminado ya no está en la respuesta
+                const itemEliminado = responseData.items.every(item => {
+                    const id = item.id?.$oid || item.id || '';
+                    return id !== itemId;
+                });
+                
+                if (itemEliminado) {
+                    console.log('Item eliminado correctamente según la respuesta del servidor');
+                } else {
+                    console.warn('¡El item sigue presente en la respuesta!');
+                    // Forzar un renderizado completo del carrito desde el servidor
+                    await this.renderizarCarrito();
+                }
+            } else {
+                // Sin datos estructurados, recargamos la UI completa
+                await this.renderizarCarrito();
+            }
+            
+            // Actualizar contador del carrito
             await this.actualizarContadorCarrito();
 
             return { mensaje: 'Item eliminado correctamente' };
@@ -261,6 +289,7 @@ class CarritoService {
         }
     }
 
+    // Modificar el método renderizarCarrito para incluir el botón de limpiar carrito
     static async renderizarCarrito() {
         try {
             const carrito = await this.obtenerCarrito();
@@ -280,7 +309,17 @@ class CarritoService {
                 return;
             }
 
-            const cartHTML = carrito.items.map(item => {
+            // Agregar botón para limpiar carrito
+            const limpiarCarritoBtn = `
+                <div class="flex justify-end mb-4">
+                    <button onclick="CarritoService.limpiarCarrito()" 
+                        class="text-red-500 hover:text-red-700 flex items-center transition-colors">
+                        <i class="fas fa-trash mr-2"></i> Limpiar carrito
+                    </button>
+                </div>
+            `;
+
+            const itemsHTML = carrito.items.map(item => {
                 // Validar que el item tenga todas las propiedades necesarias
                 if (!item) {
                     console.error('Item inválido:', item);
@@ -363,7 +402,8 @@ class CarritoService {
                     </div>`;
             }).filter(Boolean).join('');
 
-            contenedorCarrito.innerHTML = cartHTML;
+            // Combinar el botón de limpiar carrito con el contenido de los items
+            contenedorCarrito.innerHTML = limpiarCarritoBtn + itemsHTML;
             actualizarSubtotales(carrito.items.length, subtotalGeneral);
 
         } catch (error) {
@@ -481,9 +521,10 @@ class CarritoService {
         }
     }
 
-    // Agregar al final de la clase CarritoService
+    // Reemplazar el método procederPago existente
     static async procederPago() {
         try {
+            console.log('Método procederPago() iniciado');
             const carrito = await this.obtenerCarrito();
             
             if (!carrito || !carrito.items || carrito.items.length === 0) {
@@ -491,18 +532,79 @@ class CarritoService {
                 return;
             }
 
-            // Guardar datos del carrito en sessionStorage para la página de factura
+            // Guardar datos del carrito en sessionStorage para la página de checkout
             sessionStorage.setItem('carritoData', JSON.stringify({
                 items: carrito.items,
                 total: carrito.items.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0),
-                cantidadItems: carrito.items.length
+                cantidadItems: carrito.items.length,
+                fechaPago: new Date().toISOString()
             }));
 
-            // Redirigir a la página de factura
-            window.location.href = '/factura';
+            // Limpiar el carrito después de guardar los datos
+            console.log('Limpiando carrito después de proceder al pago...');
+            
+            // Hacemos la solicitud de limpieza al servidor
+            const response = await fetch('/api/carrito/limpiar', {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                console.warn('No se pudo limpiar el carrito automáticamente después del pago:', 
+                    await response.text());
+                // Continuamos con la redirección aunque no se haya podido limpiar el carrito
+            } else {
+                console.log('Carrito limpiado exitosamente después del pago');
+            }
+
+            // Redirigir a la página de checkout
+            console.log('Redirigiendo a página de checkout...');
+            window.location.href = '/checkout';
+            console.log('Instrucción de redirección enviada');
         } catch (error) {
             console.error('Error al proceder al pago:', error);
             alert('Error al proceder al pago. Por favor, intenta de nuevo.');
+        }
+    }
+
+    // Agregar este método a la clase CarritoService
+    static async limpiarCarrito() {
+        try {
+            const confirmar = confirm('¿Estás seguro de que deseas eliminar todos los productos del carrito?');
+            if (!confirmar) return;
+
+            console.log('Limpiando carrito completo...');
+
+            const response = await fetch('/api/carrito/limpiar', {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Error al limpiar carrito');
+            }
+
+            const resultado = await response.json();
+            console.log('Carrito limpiado exitosamente:', resultado);
+
+            // Actualizar la UI
+            await this.renderizarCarrito();
+            
+            // Actualizar contador del carrito
+            await this.actualizarContadorCarrito();
+
+            return { mensaje: 'Carrito limpiado correctamente' };
+        } catch (error) {
+            console.error('Error al limpiar carrito:', error);
+            alert(`No se pudo limpiar el carrito: ${error.message}`);
+            throw error;
         }
     }
 }
@@ -516,8 +618,24 @@ document.addEventListener('DOMContentLoaded', () => {
 // Hacer la clase disponible globalmente
 window.CarritoService = CarritoService;
 
-// Agregar fuera de la clase
-window.procederPago = () => CarritoService.procederPago();
+// Modificar esta línea:
+window.procederPago = function() {
+    console.log("Función global procederPago() llamada - redirigiendo a /checkout");
+    // Usar directamente la redirección en caso de problemas con CarritoService
+    try {
+        CarritoService.procederPago();
+    } catch (error) {
+        console.error("Error al llamar a CarritoService.procederPago():", error);
+        // Fallback en caso de error
+        sessionStorage.setItem('carritoData', JSON.stringify({
+            items: [],
+            total: 0,
+            cantidadItems: 0,
+            fechaPago: new Date().toISOString()
+        }));
+        window.location.href = '/checkout';
+    }
+};
 
 // Función para actualizar los subtotales
 function actualizarSubtotales(cantidadItems, subtotal) {

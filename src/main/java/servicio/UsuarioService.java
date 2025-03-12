@@ -5,16 +5,22 @@ import mongoDB.MongoDBCrud;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Service
+@Service  // Esta anotación indica a Spring que esta clase es un componente de servicio
 public class UsuarioService {
     private final MongoDBCrud mongoCrud;
     private final BCryptPasswordEncoder passwordEncoder;
+    private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
+    @Autowired
     public UsuarioService(@Qualifier("usuariosMongoDBCrud") MongoDBCrud mongoCrud) {
         this.mongoCrud = mongoCrud;
         this.passwordEncoder = new BCryptPasswordEncoder();
@@ -101,19 +107,27 @@ public class UsuarioService {
         }
     }
 
-    public boolean actualizarPassword(ObjectId id, String newPassword) {
+    /**
+     * Actualiza la contraseña de un usuario
+     * 
+     * @param usuarioId ID del usuario
+     * @param newPassword Nueva contraseña
+     * @return true si se actualizó correctamente
+     */
+    public boolean actualizarPassword(ObjectId usuarioId, String newPassword) {
         try {
-            // Encriptar la nueva contraseña
-            String hashedPassword = hashPassword(newPassword);
+            // Generar el hash de la nueva contraseña
+            String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt(12));
             
-            // Crear documento con la nueva contraseña
-            Document updateDoc = new Document("$set", new Document("password", hashedPassword));
+            // Crear el documento de actualización
+            Document updateDoc = new Document("password", hashedPassword);
             
-            // Actualizar en la base de datos
-            mongoCrud.update(id, updateDoc);
+            // Actualizar la contraseña
+            mongoCrud.update(usuarioId, updateDoc);
+            logger.info("Contraseña actualizada para usuario ID: {}", usuarioId.toString());
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error al actualizar contraseña: {}", e.getMessage());
             return false;
         }
     }

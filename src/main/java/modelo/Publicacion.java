@@ -15,11 +15,15 @@ public class Publicacion {
     private int ratingDislikes;
     private ObjectId usuarioId;
     private String categoria; // Nueva variable
+    private boolean activo; // Nuevo campo para controlar si la publicación está activa
 
     // Constructor actualizado
     public Publicacion() {
         this.fecha = new java.util.Date();
         this.publicacionId = generarPublicacionId();
+        this.activo = true; // Por defecto, las publicaciones están activas
+        this.ratingLikes = 0;
+        this.ratingDislikes = 0;
     }
 
     // Método para generar ID único y amigable
@@ -27,6 +31,15 @@ public class Publicacion {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
         String timeStamp = sdf.format(new java.util.Date());
         return "PUB-" + timeStamp + "-" + System.nanoTime() % 1000;
+    }
+    
+    // Getters y Setters para el nuevo campo activo
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
     
     // Getters y Setters para el nuevo campo

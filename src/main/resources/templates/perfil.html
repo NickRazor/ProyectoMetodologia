@@ -15,6 +15,12 @@
     <div class="container">
         <div th:replace="~{fragments/header :: header}"></div>
 
+        <!-- Mensajes de alerta -->
+        <div th:if="${mensaje != null}" th:class="${'alert alert-' + (tipoMensaje != null ? tipoMensaje : 'info')}" id="mensajeAlerta">
+            <span th:text="${mensaje}">Mensaje</span>
+            <button type="button" class="close-alert" onclick="this.parentElement.style.display='none'">×</button>
+        </div>
+
         <div class="main-container">
             <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
@@ -28,8 +34,8 @@
                             <i class="fas fa-user-circle"></i>
                         </div>
                         <div class="user-details">
-                            <h3 th:text="${usuario.nombre}">Nombre del Usuario</h3>
-                            <p th:text="${usuario.email}">email@ejemplo.com</p>
+                            <h3 th:text="${usuario != null ? usuario.nombre : nombreUsuario}">Nombre del Usuario</h3>
+                            <p th:text="${usuario != null ? usuario.email : 'No disponible'}">email@ejemplo.com</p>
                         </div>
                     </div>
 
@@ -39,11 +45,13 @@
                         <form th:action="@{/user/perfil/actualizar}" method="post">
                             <div class="form-group">
                                 <label for="nombre">Nombre:</label>
-                                <input type="text" id="nombre" name="nombre" th:value="${usuario.nombre}" required>
+                                <input type="text" id="nombre" name="nombre" 
+                                       th:value="${usuario != null ? usuario.nombre : nombreUsuario}" required>
                             </div>
                             <div class="form-group">
                                 <label for="email">Email:</label>
-                                <input type="email" id="email" name="email" th:value="${usuario.email}" required>
+                                <input type="email" id="email" name="email" 
+                                       th:value="${usuario != null ? usuario.email : ''}" required>
                             </div>
                             <div class="form-group">
                                 <label for="newPassword">Nueva Contraseña:</label>
@@ -53,7 +61,7 @@
                             <div class="form-group">
                                 <label>
                                     <input type="checkbox" name="aceptaNotificaciones" 
-                                           th:checked="${usuario.aceptaNotificaciones}">
+                                           th:checked="${usuario != null && usuario.aceptaNotificaciones}">
                                     Recibir notificaciones
                                 </label>
                             </div>
@@ -61,6 +69,47 @@
                                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                             </div>
                         </form>
+                    </div>
+
+                    <!-- Estadísticas del usuario -->
+                    <div class="user-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 th:text="${cantidadPublicaciones}">0</h3>
+                                <p>Publicaciones</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 th:text="${cantidadCompras}">0</h3>
+                                <p>Compras</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actividades recientes -->
+                    <div class="actividades-recientes">
+                        <h3>Actividad Reciente</h3>
+                        <div th:if="${actividades != null && !actividades.empty}" class="actividades-lista">
+                            <div th:each="actividad : ${actividades}" class="actividad-item">
+                                <div class="actividad-icon">
+                                    <i th:class="${actividad.tipo == 'compra' ? 'fas fa-shopping-cart' : 'fas fa-tag'}"></i>
+                                </div>
+                                <div class="actividad-info">
+                                    <p th:text="${actividad.descripcion}">Descripción de la actividad</p>
+                                    <small th:text="${#dates.format(actividad.fecha, 'dd/MM/yyyy HH:mm')}">Fecha</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${actividades == null || actividades.empty}" class="sin-actividades">
+                            <p>No hay actividades recientes</p>
+                        </div>
                     </div>
 
                     <!-- Sección de eliminación de cuenta -->

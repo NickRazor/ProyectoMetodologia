@@ -13,15 +13,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.Collections;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 
-@RestController
-@RequestMapping("/api/publicaciones")
+@Controller
+@RequestMapping("/api")
 public class PublicacionController {
 
     private final PublicacionServicio publicacionServicio;
@@ -34,7 +37,7 @@ public class PublicacionController {
 
     @GetMapping("/subir")
     public String mostrarFormularioSubida() {
-        return "user"; 
+        return "subir"; 
     }
 
     @GetMapping("/")
@@ -45,15 +48,16 @@ public class PublicacionController {
     }
 
     @PostMapping("/publicar")
-    public String publicar(@RequestParam("archivo") MultipartFile archivo,
-                          @RequestParam("titulo") String titulo,
-                          @RequestParam("descripcion") String descripcion,
-                          @RequestParam("precio") double precio,
-                          @RequestParam("categoria") String categoria, // Nuevo parámetro
-                          HttpSession session,
-                          RedirectAttributes redirectAttributes) {
+    public String publicarProducto(
+            @RequestParam("titulo") String titulo,
+            @RequestParam("descripcion") String descripcion,
+            @RequestParam("precio") double precio,
+            @RequestParam("categoria") String categoria,
+            @RequestParam("archivo") MultipartFile archivo,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
         try {
-            // Verificar si el usuario está autenticado
             Object usuarioIdObj = session.getAttribute("usuarioId");
             if (usuarioIdObj == null) {
                 return "redirect:/auth/login";
@@ -61,24 +65,33 @@ public class PublicacionController {
 
             ObjectId usuarioId = new ObjectId(usuarioIdObj.toString());
             
-            // Guardar la publicación con categoría
-            ObjectId publicacionId = publicacionServicio.guardarPublicacion(archivo, titulo, descripcion, precio, categoria, usuarioId);
+            // Crear una nueva publicación
+            Publicacion nuevaPublicacion = new Publicacion();
+            nuevaPublicacion.setTitulo(titulo);
+            nuevaPublicacion.setDescripcion(descripcion);
+            nuevaPublicacion.setPrecio(precio);
+            nuevaPublicacion.setCategoria(categoria);
+            nuevaPublicacion.setUsuarioId(usuarioId);
+            nuevaPublicacion.setFecha(new Date());
+            nuevaPublicacion.setActivo(true);
+            
+            // Guardar la publicación y la imagen
+            ObjectId publicacionId = publicacionServicio.guardarPublicacion(nuevaPublicacion, archivo);
             
             if (publicacionId != null) {
-                redirectAttributes.addFlashAttribute("mensaje", "Publicación creada exitosamente");
+                redirectAttributes.addFlashAttribute("mensaje", "Producto publicado exitosamente");
                 redirectAttributes.addFlashAttribute("tipoMensaje", "success");
-                return "redirect:/user/mis-publicaciones"; // Redirige a mis publicaciones
+                return "redirect:/user/mis-publicaciones";
             } else {
-                redirectAttributes.addFlashAttribute("mensaje", "Error al crear la publicación");
+                redirectAttributes.addFlashAttribute("mensaje", "Error al publicar el producto");
                 redirectAttributes.addFlashAttribute("tipoMensaje", "error");
-                return "redirect:/user"; // Redirige de vuelta al formulario
+                return "redirect:/user/nueva-publicacion";
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error al publicar producto", e);
             redirectAttributes.addFlashAttribute("mensaje", "Error: " + e.getMessage());
             redirectAttributes.addFlashAttribute("tipoMensaje", "error");
-            return "redirect:/user";
+            return "redirect:/user/nueva-publicacion";
         }
     }
 
@@ -256,38 +269,33 @@ public class PublicacionController {
         }
     }
 
-    @GetMapping("/destacados")
-    public ResponseEntity<?> obtenerDestacados(
-            @RequestParam(defaultValue = "6") int limite) {
+    @GetMapping("/publicaciones/destacados")
+    @ResponseBody
+    public ResponseEntity<?> obtenerPublicacionesDestacadas(
+            @RequestParam(value = "limite", defaultValue = "6") int limite) {
+            
+        logger.info("===> Recibida solicitud GET en /api/publicaciones/destacados con límite: {}", limite);
+            
         try {
-            logger.debug("Obteniendo {} publicaciones destacadas", limite);
             List<Publicacion> destacados = publicacionServicio.obtenerPublicacionesDestacadas(limite);
             
-            // Convertir a DTO para asegurar el formato correcto
-            List<Map<String, Object>> dtos = destacados.stream()
-                .map(pub -> {
-                    Map<String, Object> dto = new HashMap<>();
-                    dto.put("id", pub.getId());
-                    dto.put("idAsString", pub.getId().toString());
-                    dto.put("titulo", pub.getTitulo());
-                    dto.put("descripcion", pub.getDescripcion());
-                    dto.put("precio", pub.getPrecio());
-                    dto.put("categoria", pub.getCategoria());
-                    dto.put("fecha", pub.getFecha());
-                    dto.put("imagenIdAsString", pub.getImagenId().toString());
-                    dto.put("ratingLikes", pub.getRatingLikes());
-                    dto.put("ratingDislikes", pub.getRatingDislikes());
-                    return dto;
-                })
-                .collect(Collectors.toList());
-
-            return ResponseEntity.ok(dtos);
+            logger.info("Publicaciones destacadas encontradas: {}", 
+                destacados != null ? destacados.size() : "null");
+                
+            if (destacados == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Error al obtener publicaciones destacadas"));
+            }
+            
+            return ResponseEntity.ok(destacados);
         } catch (Exception e) {
-            logger.error("Error al obtener publicaciones destacadas: ", e);
+            logger.error("Error al procesar solicitud de publicaciones destacadas", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("mensaje", "Error al obtener productos destacados"));
+                .body(Map.of("error", "Error al obtener publicaciones destacadas",
+                             "mensaje", e.getMessage()));
         }
     }
+
 
     @GetMapping
     public ResponseEntity<?> obtenerPublicaciones() {

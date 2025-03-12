@@ -252,6 +252,7 @@ async function loadFeaturedProducts() {
     console.log('Cargando productos destacados...');
     
     try {
+        // Corregir la URL para usar la ruta correcta del endpoint
         const response = await fetch('/api/publicaciones/destacados?limite=6');
         console.log('Estado de respuesta destacados:', response.status);
         

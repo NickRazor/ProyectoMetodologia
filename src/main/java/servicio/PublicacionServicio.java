@@ -131,6 +131,63 @@ public class PublicacionServicio {
     }
 }
 
+// Añadir este método para aceptar un objeto Publicacion y un MultipartFile
+public ObjectId guardarPublicacion(Publicacion publicacion, MultipartFile archivo) throws IOException {
+    try {
+        // Guardar archivo temporalmente
+        File tempFile = convertMultiPartToFile(archivo);
+        
+        // Redimensionar la imagen a 185x115
+        File resizedFile = new File("resized_" + tempFile.getName());
+        Thumbnails.of(tempFile)
+                  .size(185, 115)
+                  .toFile(resizedFile);
+        
+        // Subir archivo redimensionado a GridFS usando FileInputStream
+        ObjectId fileId;
+        try (FileInputStream fis = new FileInputStream(resizedFile)) {
+            fileId = gridFSService.uploadFile(fis, resizedFile.getName());
+            
+            // Asignar el ID de la imagen a la publicación
+            publicacion.setImagenId(fileId);
+        }
+        
+        // Logging para debug
+        logger.info("Guardando publicación para usuario: {}", publicacion.getUsuarioId().toString());
+        
+        // Crear documento para la publicación
+        Document doc = new Document()
+                .append("titulo", publicacion.getTitulo())
+                .append("descripcion", publicacion.getDescripcion())
+                .append("precio", publicacion.getPrecio())
+                .append("categoria", publicacion.getCategoria())
+                .append("imagenId", fileId)
+                .append("fecha", publicacion.getFecha())
+                .append("usuarioId", publicacion.getUsuarioId().toString())  // Asegurarnos de guardarlo como String
+                .append("activo", publicacion.isActivo())
+                .append("ratingLikes", publicacion.getRatingLikes())
+                .append("ratingDislikes", publicacion.getRatingDislikes())
+                .append("publicacionId", publicacion.getPublicacionId());
+        
+        // Logging del documento antes de guardar
+        logger.info("Documento a guardar: {}", doc.toJson());
+        
+        // Guardar documento en MongoDB
+        ObjectId publicacionId = mongoCrud.create(doc);
+        logger.info("Publicación guardada con ID: {}", publicacionId.toString());
+        
+        // Eliminar archivos temporales
+        tempFile.delete();
+        resizedFile.delete();
+        
+        return publicacionId;
+    } catch (Exception e) {
+        logger.error("Error al guardar la publicación: {}", e.getMessage());
+        e.printStackTrace();
+        throw new RuntimeException("Error al guardar la publicación: " + e.getMessage());
+    }
+}
+
 public List<Publicacion> obtenerPublicaciones() {
     try {
         List<Document> documentos = mongoCrud.findAllDocuments();

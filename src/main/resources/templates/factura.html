@@ -1,117 +1,286 @@
 <!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Finalizar Compra - Happy Market</title>
-    <link rel="stylesheet" th:href="@{/css/user/factura.css}">
-  </head>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 
-  <body>
-    <div class="container">
-      <div class="header">
-        <div class="logo">
-          <img src="./img/Logo.png" alt="Happy Market Logo" />
-        </div>
-        <div class="page-title">
-          Finalizar compra (<span class="blue-text">n artículos</span>)
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Factura de compra - Happy Market</title>
+  <link rel="stylesheet" th:href="@{/css/user/factura.css}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      .print-only {
+        display: block !important;
+      }
+
+      body {
+        padding: 0;
+        margin: 0;
+      }
+
+      .factura-container {
+        box-shadow: none;
+        border: none;
+        margin: 0;
+        padding: 20px;
+        width: 100%;
+      }
+
+      .actions-container {
+        display: none;
+      }
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+
+    .factura-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    .factura-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .logo-container img {
+      max-height: 60px;
+    }
+
+    .factura-info h2 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+
+    .factura-info p {
+      margin: 5px 0;
+      color: #666;
+    }
+
+    .factura-details {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .cliente-info,
+    .factura-meta {
+      flex: 1;
+    }
+
+    .cliente-info h3,
+    .factura-meta h3 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .table-container {
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background-color: #1976d2;
+      color: white;
+      text-align: left;
+      padding: 12px;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .totals {
+      margin-top: 20px;
+      margin-left: auto;
+      width: 300px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .total-row.final {
+      font-weight: bold;
+      font-size: 1.2em;
+      border-bottom: 2px solid #333;
+      border-top: 2px solid #333;
+      padding: 15px 0;
+      margin-top: 10px;
+    }
+
+    .actions-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 40px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 0 10px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn i {
+      margin-right: 8px;
+    }
+
+    .btn-print {
+      background-color: #28a745;
+    }
+
+    .btn-home {
+      background-color: #6c757d;
+    }
+
+    .thank-you {
+      text-align: center;
+      margin-top: 40px;
+      color: #666;
+    }
+
+    .alert-info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="factura-container" id="facturaContenedor">
+    <div class="print-only">
+      <p class="alert-info">Esta es una copia de tu factura. Gracias por tu compra.</p>
+    </div>
+
+    <!-- Encabezado de la factura -->
+    <div class="factura-header">
+      <div class="logo-container">
+        <img th:src="@{/img/Logo.png}" src="/img/Logo.png" alt="Happy Market Logo" />
       </div>
-
-      <div class="checkout-container">
-        <div class="address-form">
-          <input type="text" placeholder="Dirección" />
-          <input type="text" placeholder="Nombre completo" />
-          <input type="text" placeholder="Número de teléfono" />
-          <input type="text" placeholder="Ciudad" />
-          <input type="text" placeholder="Estado" />
-          <input type="text" placeholder="Código postal" />
-        </div>
-
-        <div class="order-summary">
-          <div class="summary-box">
-            <div class="btn-container">
-              <button class="btn-send" onclick="confirmarPedido()">Enviar a esta dirección</button>
-            </div>
-
-            <h3 class="summary-title">Confirmación del Pedido</h3>
-            <div id="items-container">
-              <!-- Items se cargarán aquí -->
-            </div>
-
-            <div class="summary-item">
-              <span>Impuestos (18%)</span>
-              <span id="impuestos">---</span>
-            </div>
-
-            <div class="summary-item total">
-              <span>Total del pedido</span>
-              <span id="total-pedido">---</span>
-            </div>
-          </div>
-
-          <div class="payment-box">
-            <h3 class="summary-title">Método de pago</h3>
-
-            <div class="payment-methods">
-              <img src="./img/metodosPago.jpg" alt="Métodos de pago" />
-            </div>
-          </div>
-        </div>
+      <div class="factura-info">
+        <h2>FACTURA</h2>
+        <p id="facturaId">#00000</p>
+        <p>Fecha: <span id="fechaCompra">01/01/2025</span></p>
       </div>
     </div>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const carritoData = JSON.parse(sessionStorage.getItem('carritoData') || '{}');
-        const itemsContainer = document.getElementById('items-container');
-        const spanTotal = document.getElementById('total-pedido');
-        const spanImpuestos = document.getElementById('impuestos');
-        
-        // Actualizar número de artículos en el título
-        document.querySelector('.blue-text').textContent = 
-          `${carritoData.cantidadItems || 0} artículos`;
+    <!-- Detalles del cliente y factura -->
+    <div class="factura-details">
+      <div class="cliente-info">
+        <h3>Información del Cliente</h3>
+        <p id="clienteNombre">Nombre del Cliente</p>
+        <p id="clienteDireccion">Dirección</p>
+        <p id="clienteCiudad">Ciudad, Estado, CP</p>
+        <p id="clienteTelefono">Teléfono: ---</p>
+      </div>
+      <div class="factura-meta">
+        <h3>Detalles de la Compra</h3>
+        <p>Método de pago: <span id="metodoPago">Tarjeta de crédito</span></p>
+        <p>Estado: <span id="estadoPago" style="color: green; font-weight: bold;">PAGADO</span></p>
+        <p>Tipo de entrega: <span id="tipoEntrega">Envío a domicilio</span></p>
+      </div>
+    </div>
 
-        // Mostrar items
-        if (carritoData.items && carritoData.items.length > 0) {
-          itemsContainer.innerHTML = carritoData.items.map(item => `
-            <div class="summary-item">
-              <span>${item.titulo} (${item.cantidad})</span>
-              <span>US $ ${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
-            </div>
-          `).join('');
+    <!-- Tabla de productos -->
+    <div class="table-container">
+      <h3>Detalle de Productos</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio unitario</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody id="productos-lista">
+          <!-- Los productos se cargarán desde JavaScript -->
+        </tbody>
+      </table>
+    </div>
 
-          const subtotal = carritoData.total;
-          const impuestos = subtotal * 0.18;
-          const total = subtotal + impuestos;
+    <!-- Totales -->
+    <div class="totals">
+      <div class="total-row">
+        <span>Subtotal:</span>
+        <span id="subtotal">US$ 0.00</span>
+      </div>
+      <div class="total-row">
+        <span>Impuestos (18%):</span>
+        <span id="impuestos">US$ 0.00</span>
+      </div>
+      <div class="total-row">
+        <span>Envío:</span>
+        <span id="costoEnvio">US$ 5.00</span>
+      </div>
+      <div class="total-row final">
+        <span>Total:</span>
+        <span id="total">US$ 0.00</span>
+      </div>
+    </div>
 
-          spanImpuestos.textContent = `US $ ${impuestos.toFixed(2)}`;
-          spanTotal.textContent = `US $ ${total.toFixed(2)}`;
-        }
-      });
+    <div class="thank-you">
+      <h3>¡Gracias por tu compra!</h3>
+      <p>Para cualquier consulta, contáctanos a support@happymarket.com</p>
+    </div>
+  </div>
 
-      function confirmarPedido() {
-        // Validar formulario
-        const inputs = document.querySelectorAll('.address-form input');
-        let isValid = true;
-        
-        inputs.forEach(input => {
-          if (!input.value.trim()) {
-            isValid = false;
-            input.style.borderColor = 'red';
-          }
-        });
+  <!-- Botones de acción -->
+  <div class="actions-container no-print">
+    <button class="btn btn-print" onclick="imprimirFactura()">
+      <i class="fas fa-print"></i> Imprimir / Guardar PDF
+    </button>
+    <a href="/" class="btn btn-home">
+      <i class="fas fa-home"></i> Volver a Inicio
+    </a>
+  </div>
 
-        if (!isValid) {
-          alert('Por favor, completa todos los campos');
-          return;
-        }
+  <!-- Scripts -->
+  <script th:src="@{/js/factura/factura.js}"></script>
+</body>
 
-        // Procesar pedido
-        alert('¡Pedido confirmado! Gracias por tu compra.');
-        sessionStorage.removeItem('carritoData');
-        window.location.href = '/';
-      }
-    </script>
-  </body>
 </html>
+

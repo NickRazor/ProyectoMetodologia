@@ -140,74 +140,147 @@ public class CarritoServicio {
         }
     }
     
+    /**
+     * Elimina un item del carrito de un usuario
+     * 
+     * @param usuarioId ID del usuario
+     * @param itemId ID del item a eliminar
+     */
+    public void eliminarDelCarrito(ObjectId usuarioId, ObjectId itemId) {
+        logger.info("Eliminando item {} del carrito del usuario {}", itemId, usuarioId);
+        
+        try {
+            // Registrar el estado antes de la eliminación
+            List<Document> documentosActuales = mongoCrud.getCollection().find(
+                Filters.eq("usuarioId", usuarioId)
+            ).into(new ArrayList<>());
+            
+            logger.info("Documentos asociados al usuario antes de eliminar: {}", documentosActuales.size());
+            for (Document doc : documentosActuales) {
+                logger.info("Documento encontrado: id={}, productoId={}", 
+                    doc.getObjectId("_id"), doc.getObjectId("productoId"));
+            }
+            
+            // Buscar si existe el item directamente como documento individual (no como parte de un array)
+            boolean eliminado = false;
+            
+            // Verificar si itemId es el ID del documento completo (estructura plana)
+            Document itemDoc = mongoCrud.getCollection().find(
+                Filters.and(
+                    Filters.eq("_id", itemId),
+                    Filters.eq("usuarioId", usuarioId)
+                )
+            ).first();
+            
+            if (itemDoc != null) {
+                logger.info("Item encontrado como documento principal: {}", itemDoc.getObjectId("_id"));
+                mongoCrud.getCollection().deleteOne(Filters.eq("_id", itemId));
+                eliminado = true;
+                logger.info("Item eliminado como documento principal");
+            } 
+            
+            // Si no se encontró como documento principal, buscar en formato de array
+            if (!eliminado) {
+                logger.info("Intentando eliminar como elemento dentro de un array 'items'");
+                Document carrito = mongoCrud.getCollection().find(
+                    Filters.eq("usuarioId", usuarioId.toString())
+                ).first();
+                
+                if (carrito != null) {
+                    Document updateQuery = new Document(
+                        "$pull", 
+                        new Document("items", new Document("_id", itemId))
+                    );
+                    
+                    mongoCrud.updateWithFilter(
+                        new Document("_id", carrito.getObjectId("_id")),
+                        updateQuery
+                    );
+                    
+                    eliminado = true;
+                    logger.info("Item eliminado del array 'items'");
+                }
+            }
+            
+            if (!eliminado) {
+                logger.warn("No se pudo encontrar el item {} para el usuario {}", itemId, usuarioId);
+            }
+            
+            // Registrar el estado después de la eliminación
+            List<Document> documentosPosteriores = mongoCrud.getCollection().find(
+                Filters.eq("usuarioId", usuarioId)
+            ).into(new ArrayList<>());
+            
+            logger.info("Documentos asociados al usuario después de eliminar: {}", documentosPosteriores.size());
+        } catch (Exception e) {
+            logger.error("Error al eliminar item del carrito: ", e);
+            throw new RuntimeException("Error al eliminar item del carrito: " + e.getMessage(), e);
+        }
+    }
+    
     public List<CarritoItem> obtenerCarrito(ObjectId usuarioId) {
         try {
+            logger.info("Obteniendo carrito para usuario: {}", usuarioId);
             List<CarritoItem> items = new ArrayList<>();
-            FindIterable<Document> documentos;
-
-            if (usuarioId != null) {
-                documentos = mongoCrud.getCollection().find(Filters.eq("usuarioId", usuarioId));
-            } else {
-                documentos = mongoCrud.getCollection().find();
+            
+            // Si no hay ID de usuario, devolver lista vacía
+            if (usuarioId == null) {
+                logger.warn("ID de usuario es null, retornando carrito vacío");
+                return items;
             }
+
+            // Buscar todos los documentos que pertenecen al usuario
+            List<Document> documentos = mongoCrud.getCollection().find(
+                Filters.eq("usuarioId", usuarioId)
+            ).into(new ArrayList<>());
+            
+            logger.info("Documentos encontrados para usuario {}: {}", usuarioId, documentos.size());
 
             for (Document doc : documentos) {
-                CarritoItem item = new CarritoItem();
-                
-                // Manejo seguro de ObjectId
                 try {
-                    ObjectId docId = doc.getObjectId("_id");
-                    item.setId(docId);
-                } catch (Exception e) {
-                    // Si no es un ObjectId válido, intentar convertir de string
-                    String idStr = doc.getString("_id");
-                    if (idStr != null) {
-                        item.setId(new ObjectId(idStr));
+                    CarritoItem item = new CarritoItem();
+                    
+                    // ID del item (del documento)
+                    item.setId(doc.getObjectId("_id"));
+                    
+                    // ID del producto
+                    Object prodIdObj = doc.get("productoId");
+                    if (prodIdObj instanceof ObjectId) {
+                        item.setProductoId((ObjectId) prodIdObj);
+                    } else if (prodIdObj instanceof String) {
+                        item.setProductoId(new ObjectId((String) prodIdObj));
                     }
-                }
-                
-                // Manejo seguro del ID del producto
-                try {
-                    ObjectId prodId = doc.getObjectId("productoId");
-                    item.setProductoId(prodId);
-                } catch (Exception e) {
-                    String prodIdStr = doc.getString("productoId");
-                    if (prodIdStr != null) {
-                        item.setProductoId(new ObjectId(prodIdStr));
-                    }
-                }
-                
-                // Manejo seguro de valores numéricos con valores por defecto
-                item.setCantidad(doc.getInteger("cantidad", 1));
-                item.setPrecioUnitario(doc.getDouble("precioUnitario"));
-                
-                // Manejo seguro de strings con valores por defecto
-                item.setTitulo(doc.getString("titulo"));
-                
-                // Manejo de la URL de la imagen con mejor control de errores
-                try {
+                    
+                    // Cantidad, precio, título
+                    item.setCantidad(doc.getInteger("cantidad", 1));
+                    item.setPrecioUnitario(doc.get("precioUnitario") != null ? doc.getDouble("precioUnitario") : 0.0);
+                    item.setTitulo(doc.getString("titulo"));
+                    
+                    // URL de la imagen
                     Object imagenIdObj = doc.get("imagenId");
-                    String imagenUrl;
-                    
                     if (imagenIdObj instanceof ObjectId) {
-                        imagenUrl = "/api/imagen/" + ((ObjectId) imagenIdObj).toHexString();
+                        String imagenUrl = "/api/imagen/" + ((ObjectId) imagenIdObj).toHexString();
+                        item.setImagenUrl(imagenUrl);
                     } else if (imagenIdObj instanceof String) {
-                        imagenUrl = "/api/imagen/" + imagenIdObj;
+                        String imagenUrl = "/api/imagen/" + imagenIdObj;
+                        item.setImagenUrl(imagenUrl);
                     } else {
-                        imagenUrl = "/img/no-image.jpg"; // Cambio a .jpg
+                        item.setImagenUrl("/img/no-image.jpg");
                     }
                     
-                    item.setImagenUrl(imagenUrl);
+                    items.add(item);
+                    logger.debug("Item agregado al carrito: id={}, productoId={}, título={}",
+                        item.getId(), item.getProductoId(), item.getTitulo());
                 } catch (Exception e) {
-                    item.setImagenUrl("/img/no-image.jpg"); // Imagen por defecto en caso de error
+                    logger.error("Error al procesar documento del carrito: {}", doc.toJson(), e);
                 }
-                
-                items.add(item);
             }
-
+            
+            logger.info("Carrito obtenido con {} items", items.size());
             return items;
         } catch (Exception e) {
-            throw new RuntimeException("Error al obtener el carrito: " + e.getMessage(), e);
+            logger.error("Error al obtener el carrito: ", e);
+            return new ArrayList<>();
         }
     }
 
@@ -254,13 +327,32 @@ public class CarritoServicio {
         }
     }
 
-    private void limpiarCarrito(ObjectId usuarioId) {
+    /**
+     * Limpia completamente el carrito de un usuario
+     * 
+     * @param usuarioId ID del usuario
+     */
+    public void limpiarCarrito(ObjectId usuarioId) {
+        logger.info("Limpiando carrito para usuario: {}", usuarioId);
+        
         try {
-            mongoCrud.getCollection().deleteMany(
-                Filters.eq("usuarioId", usuarioId)
-            );
+            // Configurar la colección
+            mongoCrud.setCollection("carritos");
+            
+            // Eliminar todos los items del carrito del usuario
+            Document filtro = new Document("usuarioId", usuarioId);
+            long documentosEliminados = mongoCrud.getCollection().deleteMany(filtro).getDeletedCount();
+            
+            logger.info("Documentos eliminados del carrito: {}", documentosEliminados);
+            
+            // Alternativa: si los documentos tienen "usuarioId" como string en lugar de ObjectId
+            filtro = new Document("usuarioId", usuarioId.toString());
+            documentosEliminados = mongoCrud.getCollection().deleteMany(filtro).getDeletedCount();
+            
+            logger.info("Documentos adicionales eliminados (usuarioId como string): {}", documentosEliminados);
         } catch (Exception e) {
-            throw new RuntimeException("Error al limpiar el carrito: " + e.getMessage());
+            logger.error("Error al limpiar carrito: ", e);
+            throw new RuntimeException("Error al limpiar carrito: " + e.getMessage(), e);
         }
     }
 

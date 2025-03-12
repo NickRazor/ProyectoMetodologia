@@ -2,6 +2,7 @@ package controlador;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
@@ -9,7 +10,6 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import exception.UnauthorizedException;
@@ -140,14 +140,50 @@ public class CarritoController {
     }
     
     @DeleteMapping("/{itemId}")
-    public ResponseEntity<?> eliminarDelCarrito(@PathVariable String itemId) {
+    public ResponseEntity<?> eliminarDelCarrito(@PathVariable String itemId, HttpSession session) {
+        logger.info("Solicitud para eliminar item del carrito: {}", itemId);
+        
         try {
-            ObjectId id = new ObjectId(itemId);
-            carritoServicio.eliminarDelCarrito(id);
+            // Verificar autenticación primero
+            ObjectId usuarioId;
+            try {
+                usuarioId = verificarAutenticacion(session);
+                logger.info("Usuario autenticado: {}", usuarioId);
+            } catch (UnauthorizedException e) {
+                logger.warn("Intento de eliminar del carrito sin autenticación");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("mensaje", e.getMessage()));
+            }
+            
+            // Convertir el ID del item a ObjectId
+            ObjectId id;
+            try {
+                id = new ObjectId(itemId);
+                logger.info("ID del item validado: {}", id);
+            } catch (IllegalArgumentException e) {
+                logger.error("ID de item inválido: {}", itemId);
+                return ResponseEntity.badRequest()
+                        .body("ID de item inválido: " + e.getMessage());
+            }
 
-            // Obtener el carrito actualizado después de eliminar
-            List<CarritoItem> carritoActualizado = carritoServicio.obtenerCarrito(null);
-            double total = carritoServicio.calcularTotal(null);
+            // Registrar el carrito antes de eliminar (para diagnóstico)
+            List<CarritoItem> carritoAntes = carritoServicio.obtenerCarrito(usuarioId);
+            logger.info("Carrito antes de eliminar: {} items", carritoAntes.size());
+            for (CarritoItem item : carritoAntes) {
+                logger.info("Item en carrito: id={}, productoId={}", 
+                    item.getId(), item.getProductoId());
+            }
+
+            // Intentar eliminar el item
+            logger.info("Eliminando item {} del carrito del usuario {}", id, usuarioId);
+            carritoServicio.eliminarDelCarrito(usuarioId, id);
+            logger.info("Item eliminado correctamente");
+
+            // Obtener el carrito actualizado
+            List<CarritoItem> carritoActualizado = carritoServicio.obtenerCarrito(usuarioId);
+            logger.info("Carrito después de eliminar: {} items", carritoActualizado.size());
+            
+            double total = carritoServicio.calcularTotal(usuarioId);
 
             // Preparar respuesta
             Map<String, Object> response = new HashMap<>();
@@ -156,13 +192,44 @@ public class CarritoController {
             response.put("total", total);
 
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                .body("ID de item inválido: " + e.getMessage());
         } catch (Exception e) {
             logger.error("Error al eliminar item del carrito: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error al eliminar del carrito: " + e.getMessage());
+                    .body("Error al eliminar del carrito: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/limpiar")
+    public ResponseEntity<?> limpiarCarrito(HttpSession session) {
+        logger.info("Solicitud para limpiar completamente el carrito");
+        
+        try {
+            // Verificar autenticación
+            ObjectId usuarioId;
+            try {
+                usuarioId = verificarAutenticacion(session);
+                logger.info("Usuario autenticado: {}", usuarioId);
+            } catch (UnauthorizedException e) {
+                logger.warn("Intento de limpiar carrito sin autenticación");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("mensaje", e.getMessage()));
+            }
+
+            // Llamar al servicio para limpiar el carrito
+            carritoServicio.limpiarCarrito(usuarioId);
+            logger.info("Carrito limpiado correctamente para usuario: {}", usuarioId);
+
+            // Preparar respuesta
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Carrito limpiado correctamente");
+            response.put("items", new ArrayList<>()); // Carrito vacío
+            response.put("total", 0.0);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error al limpiar carrito: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al limpiar carrito: " + e.getMessage());
         }
     }
 
