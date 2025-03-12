@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -574,6 +575,97 @@ public List<Publicacion> obtenerPublicacionesDestacadas(int limite) {
     } catch (Exception e) {
         logger.error("Error al obtener publicaciones destacadas: ", e);
         return new ArrayList<>();
+    }
+}
+
+// Agregar este método a la clase PublicacionServicio
+
+/**
+ * Obtiene una lista de publicaciones aleatorias
+ * @param cantidad Cantidad de publicaciones a obtener
+ * @return Lista de publicaciones aleatorias
+ */
+public List<Publicacion> obtenerPublicacionesAleatorias(int cantidad) {
+    try {
+        // Usar la agregación de MongoDB para obtener documentos aleatorios
+        List<Document> pipelines = List.of(
+            new Document("$sample", new Document("size", cantidad))
+        );
+        
+        List<Document> documentos = mongoCrud.getCollection().aggregate(pipelines).into(new ArrayList<>());
+        return convertirDocumentosAPublicaciones(documentos);
+    } catch (Exception e) {
+        logger.error("Error al obtener publicaciones aleatorias: {}", e.getMessage());
+        return new ArrayList<>();
+    }
+}
+
+/**
+ * Busca publicaciones que coincidan con el término de búsqueda
+ * @param query Término de búsqueda
+ * @return Lista de publicaciones que coinciden con la búsqueda
+ */
+public List<Publicacion> buscarPublicaciones(String query) {
+    try {
+        logger.info("Buscando publicaciones que coincidan con: {}", query);
+        String queryLower = query.toLowerCase();
+        
+        // Obtener todas las publicaciones (en producción, usar un índice o una consulta de MongoDB más eficiente)
+        List<Publicacion> todasPublicaciones = obtenerPublicaciones();
+        
+        // Filtrar por término de búsqueda (case insensitive)
+        List<Publicacion> resultados = todasPublicaciones.stream()
+            .filter(p -> 
+                (p.getTitulo() != null && p.getTitulo().toLowerCase().contains(queryLower)) ||
+                (p.getDescripcion() != null && p.getDescripcion().toLowerCase().contains(queryLower)) ||
+                (p.getCategoria() != null && p.getCategoria().toLowerCase().contains(queryLower))
+            )
+            .limit(20) // Limitar a 20 resultados
+            .collect(Collectors.toList());
+            
+        logger.info("Se encontraron {} resultados para la búsqueda: {}", resultados.size(), query);
+        return resultados;
+    } catch (Exception e) {
+        logger.error("Error al buscar publicaciones: {}", e.getMessage(), e);
+        return new ArrayList<>();
+    }
+}
+
+/**
+ * Busca una publicación por su publicacionId (ID amigable)
+ * @param publicacionId El ID amigable de la publicación (formato PUB-YYYYMMDDHHMMSS-XXX)
+ * @return La publicación encontrada o null si no existe
+ */
+public Publicacion buscarPorPublicacionId(String publicacionId) {
+    try {
+        if (publicacionId == null || publicacionId.isEmpty()) {
+            logger.warn("ID amigable recibido está vacío");
+            return null;
+        }
+        
+        logger.info("Buscando publicación por ID amigable: {}", publicacionId);
+        
+        // Crear un documento de filtro por publicacionId
+        Document filtro = new Document("publicacionId", publicacionId);
+        
+        // Buscar el documento en MongoDB
+        Document doc = mongoCrud.getCollection().find(filtro).first();
+        
+        if (doc == null) {
+            logger.warn("No se encontró publicación con ID amigable: {}", publicacionId);
+            return null;
+        }
+        
+        // Convertir documento a objeto Publicacion
+        Publicacion publicacion = convertirDocumentoAPublicacion(doc);
+        if (publicacion != null) {
+            logger.info("Publicación encontrada con ID amigable {}: {}", publicacionId, publicacion.getId());
+        }
+        
+        return publicacion;
+    } catch (Exception e) {
+        logger.error("Error al buscar publicación por ID amigable {}: {}", publicacionId, e.getMessage(), e);
+        return null;
     }
 }
 }

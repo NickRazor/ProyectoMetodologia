@@ -43,8 +43,30 @@
                         </div>
                     </div>
                     <div class="search-bar">
-                        <input type="text" placeholder="Buscar productos...">
-                        <button><i class="fas fa-search"></i></button>
+                        <input type="text" id="searchInput" placeholder="Buscar productos..." autocomplete="off">
+                        <button id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <!-- Modal de búsqueda -->
+                    <div id="searchModal" class="search-modal">
+                        <div class="search-modal-content">
+                            <div class="search-modal-header">
+                                <h3>Resultados de búsqueda</h3>
+                                <button id="closeSearchModal" class="close-modal">&times;</button>
+                            </div>
+                            <div class="search-modal-body">
+                                <div id="searchLoading" class="search-loading">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Buscando productos...</p>
+                                </div>
+                                <div id="searchResults" class="search-results"></div>
+                                <div id="noResults" class="no-results" style="display: none;">
+                                    <i class="fas fa-search"></i>
+                                    <p>No se encontraron productos que coincidan con tu búsqueda.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -72,7 +94,7 @@
 
             <!-- Navegación principal -->
             <nav class="main-nav">
-                <a href="#">Explorar</a>
+                <a th:href="@{/explorar}">Explorar</a>
                 <a href="#">Electrónicos</a>
                 <a href="#">Casa y Jardín</a>
                 <a href="#">Juguetes</a>
@@ -81,6 +103,7 @@
         </div>
         <!-- Mover el script dentro del fragmento -->
         <script type="text/javascript" th:src="@{/js/common/header.js}"></script>
+        <script th:src="@{/js/search/search.js}"></script>
     </header>
 </body>
 </html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Market - Exploración</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/explorar/explorar.css}">
+</head>
+<body>
+    <!-- Incluir el fragmento del header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Nueva sección de categorías -->
+    <div class="category-buttons">
+        <div class="category-button" onclick="showCategory('telefonos')">
+            <i class="fas fa-mobile-alt"></i>
+            <span>Teléfonos</span>
+        </div>
+        <div class="category-button" onclick="showCategory('pc')">
+            <i class="fas fa-laptop"></i>
+            <span>PC</span>
+        </div>
+        <div class="category-button" onclick="showCategory('smartwatch')">
+            <i class="fas fa-clock"></i>
+            <span>Smartwatch</span>
+        </div>
+        <div class="category-button" onclick="showCategory('camaras')">
+            <i class="fas fa-camera"></i>
+            <span>Cámaras</span>
+        </div>
+        <div class="category-button" onclick="showCategory('audifonos')">
+            <i class="fas fa-headphones"></i>
+            <span>Audífonos</span>
+        </div>
+        <div class="category-button" onclick="showCategory('videojuegos')">
+            <i class="fas fa-gamepad"></i>
+            <span>Videojuegos</span>
+        </div>
+    </div>
+
+    <!-- Contenedor de productos -->
+    <div class="products-container">
+        <div id="products-grid" class="products-grid">
+            <!-- Aquí se mostrarán los productos dinámicamente -->
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Cargando productos...</p>
+            </div>
+        </div>
+        <!-- Botón "Ver todos los productos" -->
+        <div id="view-all-button" class="view-all-button">
+            <button onclick="showAllProducts()">Ver todos los productos</button>
+        </div>
+    </div>
+
+    <!-- Incluir el fragmento del footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- Scripts -->
+    <script th:src="@{/js/explorar/explorar.js}"></script>
+</body>
+</html>

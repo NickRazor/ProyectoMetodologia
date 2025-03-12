@@ -327,4 +327,20 @@ public class PublicacionController {
                 .body(Map.of("mensaje", "Error al obtener las publicaciones"));
         }
     }
+
+    @GetMapping("/publicaciones/por-publicacion-id/{publicacionId}")
+    public ResponseEntity<Publicacion> obtenerPorPublicacionId(@PathVariable String publicacionId) {
+        try {
+            Publicacion publicacion = publicacionServicio.buscarPorPublicacionId(publicacionId);
+            if (publicacion != null) {
+                return ResponseEntity.ok(publicacion);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            logger.error("Error al buscar publicación por ID amigable: {}", publicacionId, e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
 }
